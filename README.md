@@ -2,12 +2,15 @@
 
 ### 1. install julia
 `curl -fsSL https://install.julialang.org | s`
+
 For more info see [here](https://github.com/JuliaLang/juliaup)
 
 ### 2. Clone and initialize the repository
-`git clone git@github.com:TimVWese/contact-recovery.git`
-`cd contact-recovery`
-`julia --project -e 'using Pkg; Pkg.instantiate()'`
+```bash
+git clone git@github.com:TimVWese/contact-recovery.git`
+cd contact-recovery
+julia --project -e 'using Pkg; Pkg.instantiate()'
+```
 
 ### 3. Run the code from the command line
 `julia --project generate_tep.jl --n 900 --N 4 --dt 1.`
