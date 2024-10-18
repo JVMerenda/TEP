@@ -15,7 +15,7 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 
 Example usage:
 ```bash
-julia --project generate_tep.jl --n 900 --N 4 -dt 1.
+julia --project generate_tep.jl --n 900 --N 4 --dt 1.
 ```
 """
 
