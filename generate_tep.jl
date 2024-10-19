@@ -1,5 +1,6 @@
 using Graphs
 using NPZ
+using ProgressMeter
 
 include(joinpath(@__DIR__, "src", "GenerateTep.jl"))
 using .GenerateTep
@@ -31,10 +32,12 @@ function main()
     graph = erdos_renyi(args["n"], args["p"])
     jset, vtj, jtv = generate_jump_sets(graph)
     npzwrite("graph.npz", adjacency_matrix(graph))
+    pb = Progress(args["N"], 1)
     Threads.@threads for i in 1:args["N"]
         sol = solve_problem(args["lambda"], args["mu"], args["n"], args["T"], jset, vtj, jtv)
         tep = isnothing(args["dt"]) ? to_tep(sol) : to_tep(sol, args["dt"])
         npzwrite("tep-$i.npz", tep)
+        next!(pb)
     end
     return 0
 end
