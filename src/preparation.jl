@@ -1,21 +1,34 @@
+Base.Vector{Float64}(s::String) = Float64.([parse(Float64, item) for item in split(s[2:end-1], ",")[1:end-1]])
+
+"""
+    parse_command_line_args()
+
+"""
+    parse_command_line_args()
+
 function parse_command_line_args()
     s = ArgParseSettings()
 
     @add_arg_table s begin
-        "--n"
-        help = "Number of vertices"
+        "--N_graphs"
+        help = "Number of graphs to generate"
+        arg_type = Int64
+        default = 1
+        
+        "--N_vertices"
+        help = "Number of vertices per graph"
         arg_type = Int64
         default = 1000
+
+        "--N_teps"
+        help = "Number of teps per graph"
+        arg_type = Int64
+        default = 1
 
         "--p"
         help = "Edge probability"
         arg_type = Float64
         default = 0.01
-
-        "--N"
-        help = "Number of teps for the same graph"
-        arg_type = Int64
-        default = 1
 
         "--lambda"
         help = "Infection rate"
@@ -32,9 +45,14 @@ function parse_command_line_args()
         arg_type = Float64
         default = 100.0
 
+        "--output"
+        help = "Output directory"
+        arg_type = String
+        default = "."
+
         "--dt"
         help = "Sampling step; if nothing is given, the exact tep is returned"
-        arg_type = Float64
+        arg_type = Vector{Float64}
         default = nothing
     end
 

@@ -19,22 +19,29 @@ julia --project -e 'using Pkg; Pkg.instantiate()'
 
 This script is meant to be used by command line, with optional arguments defined in the function below.
 
-Generate a random graph using the Erdős-Rényi model, simulate stochastic SIS model on it and store a tep of the results.
-For each invocation one single new graph is generated, and the SIS model is simulated on it `N` times.
+Generate multiple random graphs using the Erdős-Rényi model, simulate stochastic SIS model on it and store a tep of the results.
+For each invocation one single new graph is generated, and the SIS model is simulated on it `N_teps` times.
 
 The simulated process is exact in continuous time. By the optional argument --dt it is possible to sample the tep at discrete time steps.
 If not given, the exact tep is stored as a list of time points and the vertex indices that change state at that point.
 
 ### Optional arguments
-- `--n` Number of vertices in the graph (default 1000)
-- `--p` Probability of an edge between two vertices (default 0.01)
-- `--N` Number of simulations to run (default 1)
+- `--N_graphs` Number of graphs to generate (default 1)
+- `--N_vertices` Number of vertices per graph (default 1000)
+- `--N_teps` Number of teps to generate per graph (default 1)
+- `--p` Edge probability (default 0.01)
 - `--lambda` Infection rate (default 0.03)
-- `--mu` Recovery rate (default 0.09)
-- `--T` Maximum time to simulate (default 100)
-- `--dt` Time step for the discrete time sampling of the tep, if not given the exact tep is stored
+- `--mu` Healing rate (default 0.09)
+- `--T` Time period (default 100.0)
+- `--output` Output directory (default ".")
+- `--dt` Sampling steps as an array (e.g. [.1,1.,10.]; if nothing is given, the exact tep is returned
+
+### Stores in the output directory
+- `graph-$i.npz` Adjacency matrix of the generated graph
+- `tep-$i-$j.npz` Tep of the $j-th simulation of the $i-th graph (if --dt is not given)
+- `tep-$i-$j-$dt.npz` Tep of the $j-th simulation of the $i-th graph sampled at time step $dt
 
 ### Example
 ```bash
-julia --project generate_tep.jl --n 900 --N 4 --dt 1.
+julia generate_tep.jl --N_graphs 4 --N_vertices 100 --N_teps 10 --p 0.04 --lambda 0.01 --mu 0.03 --T 300.0 --output g1/ --dt [1.,]
 ```
