@@ -43,5 +43,5 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 
 ### Example
 ```bash
-julia generate_tep.jl --N_graphs 4 --N_vertices 100 --N_teps 10 --p 0.04 --lambda 0.01 --mu 0.03 --T 300.0 --output g1/ --dt [1.,]
+julia --project -t 2 generate_tep.jl --N_graphs 4 --N_vertices 100 --N_teps 10 --p 0.04 --lambda 0.01 --mu 0.03 --T 300.0 --output N100/ --dt [1.,]
 ```

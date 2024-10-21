@@ -25,13 +25,13 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 - `--dt` Sampling steps as an array (e.g. [.1,1.,10.]; if nothing is given, the exact tep is returned
 
 ### Stores in the output directory
-- `graph-$i.npz` Adjacency matrix of the generated graph
-- `tep-$i-$j.npz` Tep of the $j-th simulation of the $i-th graph (if --dt is not given)
-- `tep-$i-$j-$dt.npz` Tep of the $j-th simulation of the $i-th graph sampled at time step $dt
+- `graph-\$i.npz` Adjacency matrix of the generated graph
+- `tep-\$i-\$j.npz` Tep of the \$j-th simulation of the \$i-th graph (if --dt is not given)
+- `tep-\$i-\$j-\$dt.npz` Tep of the \$j-th simulation of the \$i-th graph sampled at time step \$dt
 
 ### Example
 ```bash
-julia generate_tep.jl --N_graphs 4 --N_vertices 100 --N_teps 10 --p 0.04 --lambda 0.01 --mu 0.03 --T 300.0 --output g1/ --dt [1.,]
+julia  --project -t 2 generate_tep.jl --N_graphs 4 --N_vertices 100 --N_teps 10 --p 0.04 --lambda 0.01 --mu 0.03 --T 300.0 --output N100/ --dt [1.,]
 ```
 """
 function main()

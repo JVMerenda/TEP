@@ -1,4 +1,4 @@
-Base.Vector{Float64}(s::String) = Float64.([parse(Float64, item) for item in split(s[2:end-1], ",")[1:end-1]])
+Base.Vector{Float64}(s::String) = Float64.([parse(Float64, item) for item in split(strip(s, ['[',']']), ",") if item != ""])
 
 """
     parse_command_line_args()
