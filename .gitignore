@@ -1,3 +1,5 @@
+*.png
+sandbox.jl
 *.npz
 *.tmp
 code/jl_*

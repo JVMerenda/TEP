@@ -14,7 +14,7 @@ function parse_command_line_args()
         help = "Number of graphs to generate"
         arg_type = Int64
         default = 1
-        
+
         "--N_vertices"
         help = "Number of vertices per graph"
         arg_type = Int64
@@ -53,7 +53,11 @@ function parse_command_line_args()
         "--dt"
         help = "Sampling step; if nothing is given, the exact tep is returned"
         arg_type = Vector{Float64}
-        default = nothing
+        default = Vector{Float64}()
+
+        "--plot"
+        help = "Plot the evolution of infectious density"
+        action = :store_true
     end
 
     return parse_args(s)
