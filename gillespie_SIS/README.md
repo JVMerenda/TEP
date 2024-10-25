@@ -7,13 +7,13 @@ For more info see [here](https://github.com/JuliaLang/juliaup)
 
 ### 2. Clone and initialize the repository
 ```bash
-git clone git@github.com:TimVWese/contact-recovery.git
-cd contact-recovery
+git clone git@github.com:VMerenda/TEP.git
+cd TEP/gillespie_SIS
 julia --project -e 'using Pkg; Pkg.instantiate()'
 ```
 
 ### 3. Run the code from the command line
-`julia --project generate_tep.jl --n 900 --N 4 --dt 1.`
+`julia --project generate_tep.jl --N_vertices 900 --N 4 --dt 1.`
 
 ## Information about the script
 
@@ -69,5 +69,5 @@ julia --project generate_tep.jl --input graphs/graph-1.npz --N_teps 10 --output 
 ```
 Evaluate all networks
 ```bash
-julia --project -t 4 generate_tep.jl --input graphs/ --N_teps 10 --output graphs/ --dt [.1,.5]
+julia --project -t 4 generate_tep.jl --input graphs/ --N_teps 10 --output graphs/ --dt [.1,]
 ```
