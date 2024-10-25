@@ -1,15 +1,14 @@
 Base.Vector{Float64}(s::String) = Float64.([parse(Float64, item) for item in split(strip(s, ['[',']']), ",") if item != ""])
 
-"""
-    parse_command_line_args()
-
-"""
-    parse_command_line_args()
-
 function parse_command_line_args()
     s = ArgParseSettings()
 
     @add_arg_table s begin
+        "--input"
+        help = "Adjacency matrix of a graph as .npz file"
+        arg_type = String
+        default = ""
+
         "--N_graphs"
         help = "Number of graphs to generate"
         arg_type = Int64
@@ -61,6 +60,18 @@ function parse_command_line_args()
     end
 
     return parse_args(s)
+end
+
+function read_graph(f::AbstractString)
+    read_single_graph = f -> split(f, "/")[end][1:end-4] => Graph(npzread(f))
+    if isdir(f)
+        return [read_single_graph(joinpath(f, g)) for g in readdir(f) if endswith(g, ".npz")]
+    elseif endswith(f, ".npz")
+        return [read_single_graph(f), ]
+    else
+        @warn "No graph detected at input location"
+        return []
+    end
 end
 
 """

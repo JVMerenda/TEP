@@ -19,13 +19,16 @@ julia --project -e 'using Pkg; Pkg.instantiate()'
 
 This script is meant to be used by command line, with optional arguments defined in the function below.
 
-Generate multiple random graphs using the Erdős-Rényi model, simulate stochastic SIS model on it and store a tep of the results.
+Read graphs as adjacency matrices from a directory and generate TEPs from them, using a stochastic SIS process.
+
+Alternatively, generate multiple random graphs using the Erdős-Rényi model, simulate stochastic SIS model on it and store a tep of the results.
 For each invocation one single new graph is generated, and the SIS model is simulated on it `N_teps` times.
 
 The simulated process is exact in continuous time. By the optional argument --dt it is possible to sample the tep at discrete time steps.
 If not given, the exact tep is stored as a list of time points and the vertex indices that change state at that point.
 
 ### Optional arguments
+- `--input` Input file or directory with adjacency matrices, if not given ER graphs are created (default "")
 - `--N_graphs` Number of graphs to generate (default 1)
 - `--N_vertices` Number of vertices per graph (default 1000)
 - `--N_teps` Number of teps to generate per graph (default 1)
@@ -39,14 +42,32 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 
 ### Stores in the output directory
 - `graph-$i.npz` Adjacency matrix of the generated graph
-- `tep-$i-$j.npz` Tep of the $j-th simulation of the $i-th graph (if --dt is not given)
-- `tep-$i-$j-$dt.npz` Tep of the $j-th simulation of the $i-th graph sampled at time step $dt
+- `graph-$i-$j.npz` Tep of the $j-th simulation of the $i-th graph (if --dt is not given)
+- `graph-$i-$j-$dt.npz` Tep of the $j-th simulation of the $i-th graph sampled at time step $dt
 - `rho-$i-$j-$dt.npz` If `--plot`. Evolution of the infectious density of the $j-th simulation of the $i-th graph sampled at time step $dt
 
 ### Example
+#### Generating networks
+The `-t` flag is used to specify the number of threads that julia is allowed to use.
+The `--project` flag ensures that Julia uses the correct environment.
+
 ```bash
 julia --project -t 2 generate_tep.jl --N_graphs 4 --N_vertices 100 --N_teps 10 --p 0.04 --lambda 0.01 --mu 0.03 --T 300.0 --output N100/ --dt [1.,]
 ```
 ```bash
 julia  --project -t 1 generate_tep.jl --N_vertices 100 --N_teps 5 --p 0.01 --lambda 0.08 --mu 0.06 --output N100/ --plot
+```
+
+#### Importing networks
+For the example first generate the networks (but create zero teps)
+```bash
+julia --project generate_tep.jl --N_graphs 4 --N_vertices 0 --N_teps 0 --output graphs/
+```
+Evaluate a single network
+```bash
+julia --project generate_tep.jl --input graphs/graph-1.npz --N_teps 10 --output graphs/ --dt [1.,]
+```
+Evaluate all networks
+```bash
+julia --project -t 4 generate_tep.jl --input graphs/ --N_teps 10 --output graphs/ --dt [.1,.5]
 ```

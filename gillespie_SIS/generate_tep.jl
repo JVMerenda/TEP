@@ -7,15 +7,18 @@ using .GenerateTep
 """
 This script is meant to be used by command line, with optional arguments defined in the function below.
 
-Generate a random graph using the Erdős-Rényi model, simulate stochastic SIS model on it and store a tep of the results.
-For each invocation one single new graph is generated, and the SIS model is simulated on it `N` times.
+Read graphs as adjacency matrices from a directory and generate TEPs from them, using a stochastic SIS process.
+
+Alternatively, generate multiple random graphs using the Erdős-Rényi model, simulate stochastic SIS model on it and store a tep of the results.
+For each invocation one single new graph is generated, and the SIS model is simulated on it `N_teps` times.
 
 The simulated process is exact in continuous time. By the optional argument --dt it is possible to sample the tep at discrete time steps.
 If not given, the exact tep is stored as a list of time points and the vertex indices that change state at that point.
 
 ### Optional arguments
-- `--N_graphs` Number of graphs to generate (default 1)
-- `--N_vertices` Number of vertices per graph (default 1000)
+- `--input` Input file or directory with adjacency matrices, if not given ER graphs are created (default "")
+- `--N_graphs` Number of graphs to generate, not used if `--input` is given (default 1)
+- `--N_vertices` Number of vertices per graph, not used if `--input` is given (default 1000)
 - `--N_teps` Number of teps to generate per graph (default 1)
 - `--p` Edge probability (default 0.01)
 - `--lambda` Infection rate (default 0.03)
@@ -27,42 +30,61 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 
 ### Stores in the output directory
 - `graph-\$i.npz` Adjacency matrix of the generated graph
-- `tep-\$i-\$j.npz` Tep of the \$j-th simulation of the \$i-th graph (if --dt is not given)
-- `tep-\$i-\$j-\$dt.npz` Tep of the \$j-th simulation of the \$i-th graph sampled at time step \$dt
+- `graph-\$i-\$j.npz` Tep of the \$j-th simulation of the \$i-th graph (if --dt is not given)
+- `graph-\$i-\$j-\$dt.npz` Tep of the \$j-th simulation of the \$i-th graph sampled at time step \$dt
 
-### Examples
+### Example
+#### Generating networks
+The `-t` flag is used to specify the number of threads that julia is allowed to use.
+The `--project` flag ensures that Julia uses the correct environment.
+
 ```bash
-julia  --project -t 2 generate_tep.jl --N_graphs 4 --N_vertices 100 --N_teps 10 --p 0.04 --lambda 0.01 --mu 0.03 --T 300.0 --output N100/ --dt [1.,]
+julia --project -t 2 generate_tep.jl --N_graphs 4 --N_vertices 100 --N_teps 10 --p 0.04 --lambda 0.01 --mu 0.03 --T 300.0 --output N100/ --dt [1.,]
 ```
 ```bash
 julia  --project -t 1 generate_tep.jl --N_vertices 100 --N_teps 5 --p 0.01 --lambda 0.08 --mu 0.06 --output N100/ --plot
+```
+
+#### Importing networks
+For the example first generate the networks (but create zero teps)
+```bash
+julia --project generate_tep.jl --N_graphs 4 --N_vertices 0 --N_teps 0 --output graphs/
+```
+Evaluate a single network
+```bash
+julia --project generate_tep.jl --input graphs/graph-1.npz --N_teps 10 --output graphs/ --dt [1.,]
+```
+Evaluate all networks
+```bash
+julia --project -t 4 generate_tep.jl --input graphs/ --N_teps 10 --output graphs/ --dt [.1,.5]
 ```
 """
 function main(
         N_graphs::Int64, N_teps::Int64, N_vertices::Int64, p::Float64, λ::Float64,
         μ::Float64, T::Float64, dts::Vector{Float64}, output_dir::AbstractString,
-        create_plot::Bool
+        create_plot::Bool, input::AbstractString
     )
+    graphs = !isempty(input) ? read_graph(input) :
+        ["graph-$i" => erdos_renyi(N_vertices, p) for i in 1:N_graphs]
 
     isdir(output_dir) || mkdir(output_dir)
     cd(output_dir)
 
     # Generate N_graphs graphs
-    @showprogress for i in 1:N_graphs
-        graph = erdos_renyi(N_vertices, p)
+    for (g_name, graph) in graphs
         jset, vtj, jtv = generate_jump_sets(graph)
-        npzwrite("graph-$i.npz", adjacency_matrix(graph))
+        npzwrite("$(g_name).npz", adjacency_matrix(graph))
 
         # And simulate N_teps times
-        inner_pb = Progress(N_teps; dt=1, desc="TEPs")
+        inner_pb = Progress(N_teps; dt=1, desc="TEPs for graph $(g_name)")
         Threads.@threads for j in 1:N_teps
             sol = solve_problem(λ, μ, N_vertices, T, jset, vtj, jtv)
 
             # Result storage
             if isempty(dts)
-                npzwrite("tep-$i-$j.npz", to_tep(sol))
+                npzwrite("$g_name-$j.npz", to_tep(sol))
             else
-                map(dt -> npzwrite("tep-$i-$j-$dt.npz", to_tep(sol, dt)), dts)
+                map(dt -> npzwrite("$(g_name)-$j-$dt.npz", to_tep(sol, dt)), dts)
             end
             if(create_plot)
                 ts = 0:0.1:T
@@ -80,4 +102,4 @@ end
 args = parse_command_line_args()
 args["plot"] && using Plots
 main(args["N_graphs"], args["N_teps"], args["N_vertices"], args["p"], args["lambda"],
-    args["mu"], args["T"], args["dt"], args["output"], args["plot"])
+     args["mu"], args["T"], args["dt"], args["output"], args["plot"], args["input"])
