@@ -1,4 +1,5 @@
 *.npz
+gillespie_SIS/networks
 
 # Created by https://www.toptal.com/developers/gitignore/api/julia,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=julia,python
