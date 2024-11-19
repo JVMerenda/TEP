@@ -1,0 +1,159 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usepackage{pgfmath}
+\usetikzlibrary{arrows.meta}
+
+\definecolor{color1}{RGB}{100, 100, 100}
+\definecolor{color2}{RGB}{40, 40, 40}
+\definecolor{infcolor}{RGB}{255, 30, 107}
+\definecolor{healcolor}{RGB}{110, 84, 255}
+
+\newcommand{\Tmax}{12}
+\newcommand{\tepvertexheight}{.4}
+\newcommand{\nbcoarse}{6}
+\newcommand{\nbfine}{8}
+\newcommand{\arrowwidth}{3}
+
+\pgfmathsetmacro{\widthcoarse}{\Tmax / \nbcoarse}
+\pgfmathsetmacro{\widthfine}{\Tmax / \nbfine}
+\pgfmathsetmacro{\yzero}{0}
+\pgfmathsetmacro{\yone}{\tepvertexheight}
+\pgfmathsetmacro{\ytwo}{2*\tepvertexheight}
+\pgfmathsetmacro{\ythree}{3*\tepvertexheight}
+\pgfmathsetmacro{\yfour}{4*\tepvertexheight}
+\pgfmathsetmacro{\yfive}{5*\tepvertexheight}
+
+\newcommand{\infection}[4][1]{%
+  \draw[infcolor, thick] (#3,#2) -- (#4,#2);
+  \fill[infcolor] (#3, #2) circle (2pt);
+  \fill[healcolor, opacity=#1] (#4, #2) circle (2pt);
+}
+
+\newcommand{\addvertexlines}[1][1]{%
+  \foreach \i in {1,...,5} {%
+    \draw[thin, black!30] (0,#1*\i) -- (\Tmax,#1*\i);
+  }
+}
+
+\newcommand{\addcoarsesamples}[3][\widthcoarse]{%
+  \foreach \i in {1,...,\nbcoarse} {%
+    \pgfmathsetmacro{\x}{#1*(\i-1)}
+    \draw[dashed, thick, color1] (\x,#2) -- (\x,#3);
+  }
+}
+
+\newcommand{\addfinesamples}[3][\widthfine]{%
+  \foreach \i in {1,...,\nbfine} {%
+    \pgfmathsetmacro{\x}{#1*(\i-1)}
+    \draw[dotted, thick, color2] (\x,#2) -- (\x,#3);
+    }
+}
+
+\begin{document}
+\begin{tikzpicture}
+  %% PART I: the full tep
+  \begin{scope}
+    % time axis
+    \draw[->] (0,0) -- (\Tmax+.2,0) node[right] {$t$};
+
+    \addvertexlines
+    \addcoarsesamples{.5}{5.5}
+    \addfinesamples{.5}{5.5}
+
+    % Elementary arches/edges
+    \foreach \i in {1,...,4} {%
+      \pgfmathsetmacro{\y}{\i}
+      \draw[black!20] (-.2, \y) arc[start angle=240, end angle=120, radius=0.55];
+    }
+    % Long distance arches/edges
+    \draw[black!20] (-.3, 1) arc[start angle=240, end angle=120, radius=1.12];
+    \draw[black!20] (-.4, 1) arc[start angle=240, end angle=120, radius=2.24];
+
+    % Infection events
+    \infection{3}{0}{5.123475}
+    \infection{2}{1.3578}{5.88726}
+    \infection{1}{1.6924}{3.84572}
+    \infection{4}{4.1744}{8.17655}
+    \infection{5}{5.5834}{10.74851}
+    \infection{3}{6.0916}{7.24564}
+    \infection{2}{7.0216}{9.25485}
+    \infection[0]{1}{9.8186}{12}
+    \infection[0]{4}{10.3584}{12}
+  \end{scope}
+
+  %% PART II: the sampled teps
+  \begin{scope}[xshift=16cm]
+    \draw[->] (0,0) -- (\Tmax+.2,0) node[right] {$t$};
+    
+    % IIa Coarse tep
+    \begin{scope}[yshift=.7cm]
+      % Vertex 1
+      \draw[draw=none,fill=healcolor] (0,\yzero) rectangle (\Tmax, \yone);
+      \draw[draw=none,fill=infcolor] (\widthcoarse,\yzero) rectangle (2*\widthcoarse, \yone);
+      \draw[draw=none,fill=infcolor] (5*\widthcoarse,\yzero) rectangle (\Tmax, \yone);
+      % Vertex 2
+      \draw[draw=none,fill=healcolor] (0,\yone) rectangle (\Tmax, \ytwo);
+      \draw[draw=none,fill=infcolor] (\widthcoarse,\yone) rectangle (3*\widthcoarse, \ytwo);
+      \draw[draw=none,fill=infcolor] (4*\widthcoarse,\yone) rectangle (5*\widthcoarse, \ytwo);
+      % Vertex 3
+      \draw[draw=none,fill=healcolor] (3*\widthcoarse,\ytwo) rectangle (\Tmax, \ythree);
+      \draw[draw=none,fill=infcolor] (0,\ytwo) rectangle (3*\widthcoarse, \ythree);
+      %Vertex 4
+      \draw[draw=none,fill=healcolor] (0,\ythree) rectangle (\Tmax, \yfour);
+      \draw[draw=none,fill=infcolor] (3*\widthcoarse,\ythree) rectangle (5*\widthcoarse, \yfour);
+      % Vertex 5
+      \draw[draw=none,fill=healcolor] (0,\yfour) rectangle (3*\widthcoarse, \yfive);
+      \draw[draw=none,fill=infcolor] (3*\widthcoarse,\yfour) rectangle (\Tmax, \yfive);
+
+      \addvertexlines[\tepvertexheight]
+      \addcoarsesamples{0}{2}
+      \draw (0,0) rectangle (\Tmax, 5*\tepvertexheight);
+    \end{scope}
+
+    % IIb Fine tep
+    \begin{scope}[yshift=3.4cm]
+      % Vertex 1
+      \draw[draw=none,fill=healcolor] (0,\yzero) rectangle (\Tmax, \yone);
+      \draw[draw=none,fill=infcolor] (2*\widthfine,\yzero) rectangle (3*\widthfine, \yone);
+      \draw[draw=none,fill=infcolor] (7*\widthfine,\yzero) rectangle (\Tmax, \yone);
+      % Vertex 2
+      \draw[draw=none,fill=healcolor] (0,\yone) rectangle (\Tmax, \ytwo);
+      \draw[draw=none,fill=infcolor] (\widthfine,\yone) rectangle (4*\widthfine, \ytwo);
+      \draw[draw=none,fill=infcolor] (5*\widthfine,\yone) rectangle (7*\widthfine, \ytwo);
+      % Vertex 3
+      \draw[draw=none,fill=infcolor] (0,\ytwo) rectangle (4*\widthfine, \ythree);
+      \draw[draw=none,fill=healcolor] (4*\widthfine,\ytwo) rectangle (\Tmax, \ythree);
+      % Vertex 4
+      \draw[draw=none,fill=healcolor] (0,\ythree) rectangle (\Tmax, \yfour);
+      \draw[draw=none,fill=infcolor] (3*\widthfine,\ythree) rectangle (6*\widthfine, \yfour);
+      \draw[draw=none,fill=infcolor] (7*\widthfine,\ythree) rectangle (\Tmax, \yfour);
+      % Vertex 5
+      \draw[draw=none,fill=healcolor] (0,\yfour) rectangle (4*\widthfine, \yfive);
+      \draw[draw=none,fill=infcolor] (4*\widthfine,\yfour) rectangle (\Tmax, \yfive);
+
+      \addvertexlines[\tepvertexheight]
+      \addfinesamples{0}{2}
+      \draw (0,0) rectangle (\Tmax, 5*\tepvertexheight);
+    \end{scope}
+  \end{scope}
+
+  %% PART III: Interface
+  \begin{scope}[xshift=12.6cm]
+    % Coarse arrow
+    \begin{scope}[yshift=1.5cm]
+      \pgfmathsetmacro{\samplespacing}{\arrowwidth / \nbcoarse}
+      \addcoarsesamples[\samplespacing]{.2}{1}
+      \draw[->, thick, line width=3] (-.15,0) -- (\arrowwidth+.15,0);
+      \node[below] at (\arrowwidth*0.5 - .15,0) {Coarse sampling};
+    \end{scope}
+    % Fine arrow
+    \begin{scope}[yshift=4.2cm]
+      \pgfmathsetmacro{\samplespacing}{\arrowwidth / \nbfine}
+      \addfinesamples[\samplespacing]{.2}{1}
+      \draw[->, thick, line width=3] (-.15,0) -- (\arrowwidth+.15,0);
+      \node[below] at (\arrowwidth*0.5 - .15,0) {Fine sampling};
+    \end{scope}
+
+  \end{scope}
+\end{tikzpicture}
+\end{document}
