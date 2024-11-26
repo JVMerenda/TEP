@@ -1,0 +1,82 @@
+\definecolor{color15}{RGB}{100, 100, 100}
+\definecolor{color30}{RGB}{40, 40, 40}
+
+\pgfplotsset{
+    colormap={bw15}{%
+        rgb255=(255, 255, 255)
+        rgb255=(100,100,100)
+    },
+    colormap={bw30}{%
+        rgb255=(255, 255, 255)
+        rgb255=(40,40,40)
+    }
+}
+
+\pgfplotsset{%
+  lineg/.style={%
+    line width=2,
+    %full,
+  },
+  linem/.style={%
+    line width=2,
+    dashed,
+  }
+}
+
+\newcommand{\densplot}[2]{%
+  \addplot[line#1, color#2] table [x=t, y=#1#2, col sep = comma]{data/densities.csv};
+}
+
+\begin{tikzpicture}
+  \begin{axis}[%
+    xmin=0,
+    xmax=100,
+    xlabel=\( t \),
+    %
+    ymin=0,
+    ymax=1,
+    ylabel=\( \rho \),
+    %
+    axis lines=left,
+  ]
+    \densplot{m}{15}
+    \densplot{m}{30}
+    \densplot{g}{15}
+    \densplot{g}{30}
+  \end{axis}
+\end{tikzpicture}
+
+\newcommand{\sistep}[2][]{%
+  \begin{axis}[%
+    width=180pt,
+    height=270pt,
+    xmin=1,
+    xmax=51,
+    x axis line style={draw=none},
+    xtick=\empty,
+    %
+    ymin=0,
+    ymax=100,
+    ylabel={\( t \)},
+    %
+    axis lines=left,
+    %
+    colormap name=bw#2,
+    #1
+  ]
+    \addplot[%
+      matrix plot,
+      mesh/cols=101,
+      point meta=explicit,
+    ] table [%
+      x=node,
+      y=time,
+      meta=state,
+      col sep=comma
+    ] {data/tep#2.csv};
+  \end{axis}
+}
+\begin{tikzpicture}
+  \sistep{15}
+  \sistep[xshift=200pt]{30}
+\end{tikzpicture}
