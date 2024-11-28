@@ -27,6 +27,12 @@
   \addplot[line#1, color#2] table [x=t, y=#1#2, col sep = comma]{data/densities.csv};
 }
 
+\newcommand{\boundplot}[1]{%
+  \addplot[name path=ub#1, draw=none, fill=none] table [x=t, y=ub#1, col sep = comma]{data/densities.csv};
+  \addplot[name path=lb#1, draw=none, fill=none] table [x=t, y=lb#1, col sep = comma]{data/densities.csv};
+  \addplot[color#1, opacity=0.25] fill between[of=ub#1 and lb#1];
+}
+
 \begin{tikzpicture}
   \begin{axis}[%
     xmin=0,
@@ -39,6 +45,8 @@
     %
     axis lines=left,
   ]
+    \boundplot{15}
+    \boundplot{30}
     \densplot{m}{15}
     \densplot{m}{30}
     \densplot{g}{15}
