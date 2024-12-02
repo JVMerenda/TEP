@@ -18,6 +18,24 @@ The files can be read using the class provided in `read_tep.py`.
 Previously sampled TEPs have been generated in `N100_sampled/`, `N500_sampled/`, and `N1000_sampled/`.
 The networks or the TEPs do not coincide.
 
+## Geometric graphs
+
+Given the applicability of the research, it should be tested wether the method can be used on geometric graphs.
+Since Julia only provides deterministic methods for geometric graphs, rewiring with probability .1 is used to introduce randomness.
+The cutoff distance depends on the number of vertices such that the expected degree is around 10.
+(N=100, cutoff=0.198), (N=500, cutoff=0.83), (N=1000, cutoff=0.58)
+
+First generate the networks (see the file for details)
+```bash
+julia --project results/geometric/build_graphs.jl
+```
+Then generate the TEPs
+```bash
+julia --project -t 10 generate_tep.jl --input results/geometric/N100/ --N_teps 50 --output results/geometric/N100/
+julia --project -t 10 generate_tep.jl --input results/geometric/N500/ --N_teps 50 --output results/geometric/N500/
+julia --project -t 10 generate_tep.jl --input results/geometric/N1000/ --N_teps 50 --output results/geometric/N1000/
+```
+
 ## Real-life graphs
 
 The following real-life graphs are available as well.
@@ -38,7 +56,7 @@ The following real-life graphs are available as well.
     * 2009_07_15.npz: 410 nodes, 2765 edges
     * 2009_07_16.npz: 318 nodes, 1441 edges
 
-First they have to be genrated to the correct format from the edgelist
+First they have to be generated to the correct format from the edge list
 ```bash
 julia --project results/real/convert_to_npz.jl
 ```
