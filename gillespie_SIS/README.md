@@ -39,6 +39,7 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 - `--output` Output directory (default ".")
 - `--dt` Sampling steps as an array (e.g. [.1,1.,10.]; if nothing is given, the exact tep is returned
 - `--plot` Flag to plot the evolution of infectious density (recommend to use with only one thread)
+- `--allow-dieout` Flag to also store the result if the infection has died out by time `T`
 
 ### Stores in the output directory
 - `graph-$i.npz` Adjacency matrix of the generated graph

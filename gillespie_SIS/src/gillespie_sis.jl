@@ -16,7 +16,7 @@ function generate_jump_sets(graph)
 
     # Infection event (jump over an edge)
     e_SI = ConstantJumpEdge(
-        (vs, vd, p, t) -> vs[1]*p[1], # rate
+        (vs, vd, p, t) -> vs[1]*(1. - vd[1])*p[1], # rate
         (vs, vd, p, t) -> vd[1] = infectious  # affect!
     )
 

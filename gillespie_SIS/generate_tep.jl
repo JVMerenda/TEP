@@ -27,6 +27,7 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 - `--output` Output directory (default ".")
 - `--dt` Sampling steps as an array (e.g. [.1,1.,10.]; if nothing is given, the exact tep is returned
 - `--plot` Flag to plot the evolution of infectious density (recommend to use with only one thread)
+- `--allow-dieout` Flag to also store the result if the infection has died out by time `T`
 
 ### Stores in the output directory
 - `graph-\$i.npz` Adjacency matrix of the generated graph
@@ -61,14 +62,16 @@ julia --project -t 4 generate_tep.jl --input graphs/ --N_teps 10 --output graphs
 """
 function main(
         N_graphs::Int64, N_teps::Int64, N_vertices::Int64, p::Float64, λ::Float64,
-        μ::Float64, T::Float64, dts::Vector{Float64}, output_dir::AbstractString,
-        create_plot::Bool, input::AbstractString
+        μ::Float64, T::Float64, dts::Vector{Float64}, input::AbstractString,
+        output_dir::AbstractString, create_plot::Bool, allow_dieout::Bool
     )
     graphs = !isempty(input) ? read_graph(input) :
         ["graph-$i" => erdos_renyi(N_vertices, p) for i in 1:N_graphs]
 
     isdir(output_dir) || mkdir(output_dir)
     cd(output_dir)
+
+    is_success = sol -> allow_dieout || any(u[1] == 1 for u in sol[end])
 
     # Generate N_graphs graphs
     for (g_name, graph) in graphs
@@ -78,19 +81,22 @@ function main(
         # And simulate N_teps times
         inner_pb = Progress(N_teps; dt=1, desc="TEPs for graph $(g_name)")
         Threads.@threads for j in 1:N_teps
-            sol = solve_problem(λ, μ, N_vertices, T, jset, vtj, jtv)
+            sol = solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv)
+            while !is_success(sol)
+                sol = solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv)
+            end
 
             # Result storage
             if isempty(dts)
-                npzwrite("$g_name-$j.npz", to_tep(sol))
+                npzwrite("tep-$g_name-$j.npz", to_tep(sol))
             else
-                map(dt -> npzwrite("$(g_name)-$j-$dt.npz", to_tep(sol, dt)), dts)
+                map(dt -> npzwrite("tep-$(g_name)-$j-$dt.npz", to_tep(sol, dt)), dts)
             end
             if(create_plot)
                 ts = 0:0.1:T
                 densities = [count(sol(t) .== 1) / nv(graph) for t in ts]
-                p = plot(ts, densities, title="Graph $i, TEP $j"; legend=false)
-                savefig(p, "rho-$i-$j.png")
+                p = plot(ts, densities, title="Graph $(g_name), TEP $j"; legend=false)
+                savefig(p, "rho-$(g_name)-$j.png")
             end
             next!(inner_pb)
         end
@@ -102,4 +108,4 @@ end
 args = parse_command_line_args()
 args["plot"] && using Plots
 main(args["N_graphs"], args["N_teps"], args["N_vertices"], args["p"], args["lambda"],
-     args["mu"], args["T"], args["dt"], args["output"], args["plot"], args["input"])
+     args["mu"], args["T"], args["dt"], args["input"], args["output"], args["plot"], args["allow-dieout"])
