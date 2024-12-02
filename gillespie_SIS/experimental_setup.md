@@ -1,11 +1,11 @@
-## For Erdos Renyi Graphs
+## The Erdos Renyi Graphs
 
 The data in this folder has been generated using the following invocations of `generate_tep.jl`:
 
 ```bash
-julia --project -t 10 generate_tep.jl --p 0.1  --N_vertices 100  --output N100_exact/  --N_graphs 10 --N_teps 50
-julia --project -t 10 generate_tep.jl --p 0.02 --N_vertices 500  --output N500_exact/  --N_graphs 10 --N_teps 50
-julia --project -t 10 generate_tep.jl --p 0.01 --N_vertices 1000 --output N1000_exact/ --N_graphs 10 --N_teps 50
+julia --project -t 10 generate_tep.jl --p 0.1  --N_vertices 100  --output results/erdos_renyi/N100/  --N_graphs 10 --N_teps 50
+julia --project -t 10 generate_tep.jl --p 0.02 --N_vertices 500  --output results/erdos_renyi/N500/  --N_graphs 10 --N_teps 50
+julia --project -t 10 generate_tep.jl --p 0.01 --N_vertices 1000 --output results/erdos_renyi/N1000/ --N_graphs 10 --N_teps 50
 ```
 
 Hence in each of the folders `N100`, `N500`, and `N1000` there are 10 graphs with 50 teps each.
@@ -18,9 +18,9 @@ The files can be read using the class provided in `read_tep.py`.
 Previously sampled TEPs have been generated in `N100_sampled/`, `N500_sampled/`, and `N1000_sampled/`.
 The networks or the TEPs do not coincide.
 
-## For other graphs
+## Real-life graphs
 
-Real-life graphs are available as well.
+The following real-life graphs are available as well.
 
 1. [Infect-Hyper](https://networkrepository.com/infect-hyper.php) 113 nodes w 2196 edges of human close proximity network.
 2. [Infectious SocioPatterns dynamic contact networks](http://www.sociopatterns.org/datasets/infectious-sociopatterns-dynamic-contact-networks/) Collection of daily interactions within a museum. The daily graphs that result in a fully connected network are included. This results in:
@@ -37,3 +37,18 @@ Real-life graphs are available as well.
     * 2009_07_09.npz: 114 nodes, 373 edges
     * 2009_07_15.npz: 410 nodes, 2765 edges
     * 2009_07_16.npz: 318 nodes, 1441 edges
+
+First they have to be genrated to the correct format from the edgelist
+```bash
+julia --project results/real/convert_to_npz.jl
+```
+Then the TEPs can be generated
+```bash
+julia --project -t 10 generate_tep.jl --input results/real/infect-hyper --N_teps 50 --output results/real/infect-hyper
+julia --project -t 10 generate_tep.jl --input results/real/sociopatterns --N_teps 50 --output results/real/sociopatterns
+```
+
+## Legacy results
+The results in the `N100_exact`, `N500_exact`, and `N1000_exact` folders have been generated using a previous version of the code.
+They should not differ qualitatively from the current results, but the exact values might differ due to stochastic nature.
+For reasons of reproducibility they are kept.
