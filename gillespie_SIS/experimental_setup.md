@@ -19,3 +19,21 @@ Previously sampled TEPs have been generated in `N100_sampled/`, `N500_sampled/`,
 The networks or the TEPs do not coincide.
 
 ## For other graphs
+
+Real-life graphs are available as well.
+
+1. [Infect-Hyper](https://networkrepository.com/infect-hyper.php) 113 nodes w 2196 edges of human close proximity network.
+2. [Infectious SocioPatterns dynamic contact networks](http://www.sociopatterns.org/datasets/infectious-sociopatterns-dynamic-contact-networks/) Collection of daily interactions within a museum. The daily graphs that result in a fully connected network are included. This results in:
+    * 2009_05_03.npz: 305 nodes, 1847 edges
+    * 2009_05_06.npz: 176 nodes, 745 edges
+    * 2009_05_07.npz: 194 nodes, 801 edges
+    * 2009_05_15.npz: 241 nodes, 1301 edges
+    * 2009_05_16.npz: 241 nodes, 1504 edges
+    * 2009_05_23.npz: 238 nodes, 1075 edges
+    * 2009_06_06.npz: 142 nodes, 696 edges
+    * 2009_06_07.npz: 155 nodes, 563 edges
+    * 2009_06_14.npz: 138 nodes, 433 edges
+    * 2009_07_04.npz: 127 nodes, 526 edges
+    * 2009_07_09.npz: 114 nodes, 373 edges
+    * 2009_07_15.npz: 410 nodes, 2765 edges
+    * 2009_07_16.npz: 318 nodes, 1441 edges
