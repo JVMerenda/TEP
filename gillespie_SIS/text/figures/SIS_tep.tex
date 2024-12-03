@@ -1,11 +1,15 @@
-\newcommand{\Tmax}{12}
+\newcommand{\Tmax}{10}
+\newcommand{\vertexheight}{.6}
 \newcommand{\tepvertexheight}{.4}
 \newcommand{\nbcoarse}{6}
 \newcommand{\nbfine}{8}
-\newcommand{\arrowwidth}{3}
+\newcommand{\arrowwidth}{2}
+
+\pgfmathsetmacro{\xrescale}{\Tmax / 12}
 
 \pgfmathsetmacro{\widthcoarse}{\Tmax / \nbcoarse}
 \pgfmathsetmacro{\widthfine}{\Tmax / \nbfine}
+
 \pgfmathsetmacro{\yzero}{0}
 \pgfmathsetmacro{\yone}{\tepvertexheight}
 \pgfmathsetmacro{\ytwo}{2*\tepvertexheight}
@@ -13,13 +17,15 @@
 \pgfmathsetmacro{\yfour}{4*\tepvertexheight}
 \pgfmathsetmacro{\yfive}{5*\tepvertexheight}
 
+
+
 \newcommand{\infection}[4][1]{%
-  \draw[infcolor, thick] (#3,#2) -- (#4,#2);
-  \fill[infcolor] (#3, #2) circle (2pt);
-  \fill[healcolor, opacity=#1] (#4, #2) circle (2pt);
+  \draw[infcolor, thick] (\xrescale * #3, \vertexheight * #2) -- (\xrescale * #4, \vertexheight * #2);
+  \fill[infcolor] (\xrescale * #3, \vertexheight * #2) circle (2pt);
+  \fill[healcolor, opacity=#1] (\xrescale * #4, \vertexheight * #2) circle (2pt);
 }
 
-\newcommand{\addvertexlines}[1][1]{%
+\newcommand{\addvertexlines}[1][\vertexheight]{%
   \foreach \i in {1,...,5} {%
     \draw[thin, black!30] (0,#1*\i) -- (\Tmax,#1*\i);
   }
@@ -43,20 +49,20 @@
   %% PART I: the full tep
   \begin{scope}
     % time axis
-    \draw[->] (0,0) -- (\Tmax+.2,0) node[right] {$t$};
+    %\draw[->] (0,0) -- (\Tmax+.2,0) node[right] {$t$};
 
     \addvertexlines
-    \addcoarsesamples{.5}{5.5}
-    \addfinesamples{.5}{5.5}
+    \addcoarsesamples{.2}{6 * \vertexheight - .2}
+    \addfinesamples{.2}{6 * \vertexheight - .2}
 
     % Elementary arches/edges
     \foreach \i in {1,...,4} {%
-      \pgfmathsetmacro{\y}{\i}
-      \draw[black!20] (-.2, \y) arc[start angle=240, end angle=120, radius=0.55];
+      \pgfmathsetmacro{\y}{\i * \vertexheight}
+      \draw[black!20] (-.15, \y) arc[start angle=240, end angle=120, radius=\vertexheight/1.9];
     }
     % Long distance arches/edges
-    \draw[black!20] (-.3, 1) arc[start angle=240, end angle=120, radius=1.12];
-    \draw[black!20] (-.4, 1) arc[start angle=240, end angle=120, radius=2.24];
+    \draw[black!20] (-.25, \vertexheight) arc[start angle=240, end angle=120, radius=1.15*\vertexheight];
+    \draw[black!20] (-.35, \vertexheight) arc[start angle=240, end angle=120, radius=2.24*\vertexheight];
 
     % Infection events
     \infection{3}{0}{5.123475}
@@ -71,11 +77,11 @@
   \end{scope}
 
   %% PART II: the sampled teps
-  \begin{scope}[xshift=16cm]
+  \begin{scope}[yshift=-12*\tepvertexheight cm]
     \draw[->] (0,0) -- (\Tmax+.2,0) node[right] {$t$};
 
     % IIa Coarse tep
-    \begin{scope}[yshift=.7cm]
+    \begin{scope}[yshift=.5 * \tepvertexheight cm]
       % Vertex 1
       \draw[draw=none,fill=healcolor] (0,\yzero) rectangle (\Tmax, \yone);
       \draw[draw=none,fill=infcolor] (\widthcoarse,\yzero) rectangle (2*\widthcoarse, \yone);
@@ -100,7 +106,7 @@
     \end{scope}
 
     % IIb Fine tep
-    \begin{scope}[yshift=3.4cm]
+    \begin{scope}[yshift=6 * \tepvertexheight cm]
       % Vertex 1
       \draw[draw=none,fill=healcolor] (0,\yzero) rectangle (\Tmax, \yone);
       \draw[draw=none,fill=infcolor] (2*\widthfine,\yzero) rectangle (3*\widthfine, \yone);
@@ -127,20 +133,20 @@
   \end{scope}
 
   %% PART III: Interface
-  \begin{scope}[xshift=12.6cm]
+  \begin{scope}[xshift=-.3cm -\arrowwidth cm, yshift=-12*\tepvertexheight cm]
     % Coarse arrow
-    \begin{scope}[yshift=1.5cm]
+    \begin{scope}[yshift=2.5 * \tepvertexheight cm]
       \pgfmathsetmacro{\samplespacing}{\arrowwidth / \nbcoarse}
-      \addcoarsesamples[\samplespacing]{.2}{1}
+      \addcoarsesamples[\samplespacing]{.2}{.2 + \vertexheight}
       \draw[->, thick, line width=3] (-.15,0) -- (\arrowwidth+.15,0);
-      \node[below] at (\arrowwidth*0.5 - .15,0) {Coarse sampling};
+      \node[below] at (\arrowwidth*0.5 - .15,0) {\scriptsize Coarse sampling};
     \end{scope}
     % Fine arrow
-    \begin{scope}[yshift=4.2cm]
+    \begin{scope}[yshift=8 * \tepvertexheight cm]
       \pgfmathsetmacro{\samplespacing}{\arrowwidth / \nbfine}
-      \addfinesamples[\samplespacing]{.2}{1}
+      \addfinesamples[\samplespacing]{.2}{.2 + \vertexheight}
       \draw[->, thick, line width=3] (-.15,0) -- (\arrowwidth+.15,0);
-      \node[below] at (\arrowwidth*0.5 - .15,0) {Fine sampling};
+      \node[below] at (\arrowwidth*0.5 - .15,0) {\scriptsize Fine sampling};
     \end{scope}
 
   \end{scope}

@@ -19,6 +19,7 @@ gillespie_SIS/networks
 *.cb
 *.cb2
 .*.lb
+*.dep
 
 ## Intermediate documents:
 *.dvi

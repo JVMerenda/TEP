@@ -1,49 +1,92 @@
-\definecolor{color15}{RGB}{100, 100, 100}
-\definecolor{color30}{RGB}{40, 40, 40}
-
 \pgfplotsset{
-    colormap={bw15}{%
-        rgb255=(255, 255, 255)
-        rgb255=(100,100,100)
+  every axis/.append style={
+    tick label style={font=\small},
+    label style={font=\small},
+    legend style={font=\small},
+  },
+  %
+  txaxis/.style={%
+    xmin=0,
+    xmax=100,
+    xtick={0,25,50,75},
+    xlabel=\( t \),
+    xlabel style={%
+      at=(current axis.right of origin),
+      anchor=north,
     },
-    colormap={bw30}{%
-        rgb255=(255, 255, 255)
-        rgb255=(40,40,40)
-    }
+  },
 }
 
 \pgfplotsset{%
   lineg/.style={%
-    line width=2,
+    line width=1.5,
     %full,
   },
   linem/.style={%
-    line width=2,
+    line width=1.5,
     dashed,
   }
 }
 
 \newcommand{\densplot}[2]{%
-  \addplot[line#1, color#2] table [x=t, y=#1#2, col sep = comma]{data/densities.csv};
+  \addplot[line#1, color#2] table [x=t, y=#1#2, col sep = comma]{figures/data/densities.csv};
 }
 
 \newcommand{\boundplot}[1]{%
-  \addplot[name path=ub#1, draw=none, fill=none] table [x=t, y=ub#1, col sep = comma]{data/densities.csv};
-  \addplot[name path=lb#1, draw=none, fill=none] table [x=t, y=lb#1, col sep = comma]{data/densities.csv};
+  \addplot[name path=ub#1, draw=none, fill=none] table [x=t, y=ub#1, col sep = comma]{figures/data/densities.csv};
+  \addplot[name path=lb#1, draw=none, fill=none] table [x=t, y=lb#1, col sep = comma]{figures/data/densities.csv};
   \addplot[color#1, opacity=0.25] fill between[of=ub#1 and lb#1];
+}
+
+\newcommand{\sistep}[2][]{%
+  \begin{axis}[%
+    width=.45\textwidth,
+    height=.3\textwidth,
+    %
+    txaxis,
+    %
+    ymin=0,
+    ymax=100,
+    ytick=\empty,
+    %
+    y axis line style={draw=none},
+    axis lines=left,
+    %
+    colormap name=bw#2,
+    #1,
+  ]
+    \addplot[%
+      matrix plot*,
+      mesh/cols=101,
+      point meta=explicit,
+    ] table [%
+      x=time,
+      y=node,
+      meta=state,
+      col sep=comma
+    ] {figures/data/tep#2.csv};
+  \end{axis}
 }
 
 \begin{tikzpicture}
   \begin{axis}[%
-    xmin=0,
-    xmax=100,
-    xlabel=\( t \),
+    width=.44\textwidth,
+    height=.37\textwidth,
+    %xshift=.33\textwidth,
+    %yshift=.05\textwidth,
+    %
+    txaxis,
     %
     ymin=0,
     ymax=1,
-    ylabel=\( \rho \),
-    %
     axis lines=left,
+    ytick={0,.25,.5,.75},
+    ylabel={\( \rho \)},
+    ylabel style={%
+      at=(current axis.above origin),
+      anchor=east,
+      rotate=-90,
+    },
   ]
     \boundplot{15}
     \boundplot{30}
@@ -52,39 +95,6 @@
     \densplot{g}{15}
     \densplot{g}{30}
   \end{axis}
-\end{tikzpicture}
-
-\newcommand{\sistep}[2][]{%
-  \begin{axis}[%
-    width=180pt,
-    height=270pt,
-    xmin=1,
-    xmax=51,
-    x axis line style={draw=none},
-    xtick=\empty,
-    %
-    ymin=0,
-    ymax=100,
-    ylabel={\( t \)},
-    %
-    axis lines=left,
-    %
-    colormap name=bw#2,
-    #1
-  ]
-    \addplot[%
-      matrix plot,
-      mesh/cols=101,
-      point meta=explicit,
-    ] table [%
-      x=node,
-      y=time,
-      meta=state,
-      col sep=comma
-    ] {data/tep#2.csv};
-  \end{axis}
-}
-\begin{tikzpicture}
-  \sistep{15}
-  \sistep[xshift=200pt]{30}
+  \sistep[xshift=.45\textwidth]{15}
+  \sistep[xshift=.45\textwidth, yshift=.15\textwidth]{30}
 \end{tikzpicture}
