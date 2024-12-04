@@ -16,6 +16,17 @@ function geometric_graph(N, D, p; d=2)
     return g
 end
 
+function generate(N_graphs, parameter_combinations)
+    for params in parameter_combinations
+        output_dir = "N$(params.N)"
+        isdir(output_dir) || mkdir(output_dir)
+        for i in 1:N_graphs
+            g = geometric_graph(params.N, params.D, params.p)
+            npzwrite(joinpath(output_dir, "geom-$i.npz"), adjacency_matrix(g))
+        end
+    end
+end
+
 cd(@__DIR__)
 
 parameter_combinations = [
@@ -24,13 +35,10 @@ parameter_combinations = [
     (N=500, D=0.083, p=0.1),
     (N=1000, D=0.058, p=0.1),
 ]
-N_graphs = 10
 
-for params in parameter_combinations
-    output_dir = "N$(params.N)"
-    isdir(output_dir) || mkdir(output_dir)
-    for i in 1:N_graphs
-        g = geometric_graph(params.N, params.D, params.p)
-        npzwrite(joinpath(output_dir, "graph-$i.npz"), adjacency_matrix(g))
-    end
+try
+    N_graphs = parse(Int, ARGS[1])
+    generate(N_graphs, parameter_combinations)
+catch
+    @error "Usage: julia build_graphs.jl N_graphs"
 end

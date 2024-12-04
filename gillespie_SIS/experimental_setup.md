@@ -1,11 +1,23 @@
+## General remark
+
+For all networks, except the real ones, the parameters are chosen such that the mean degree is (close to) 10.
+The exact values can be found in their respective `build_graphs.jl` scripts.
+
+Everything below is collected in the `run_experiments.sh` script.
+Inside the script there are easy to adjust parameters for the number of threads, graphs, and teps.
+```bash
+bash run_experiments.sh
+```
+
 ## The Erdos Renyi Graphs
 
 The data in this folder has been generated using the following invocations of `generate_tep.jl`:
 
 ```bash
-julia --project -t 10 generate_tep.jl --p 0.1  --N_vertices 100  --output results/erdos_renyi/N100/  --N_graphs 10 --N_teps 50
-julia --project -t 10 generate_tep.jl --p 0.02 --N_vertices 500  --output results/erdos_renyi/N500/  --N_graphs 10 --N_teps 50
-julia --project -t 10 generate_tep.jl --p 0.01 --N_vertices 1000 --output results/erdos_renyi/N1000/ --N_graphs 10 --N_teps 50
+julia --project -t 10 generate_tep.jl --p 0.1  --N_vertices 100  --output results/erdos_renyi/N100/  --N_graphs 10 --N_teps 100
+julia --project -t 10 generate_tep.jl --p 0.04 --N_vertices 250  --output results/erdos_renyi/N250/  --N_graphs 10 --N_teps 100
+julia --project -t 10 generate_tep.jl --p 0.02 --N_vertices 500  --output results/erdos_renyi/N500/  --N_graphs 10 --N_teps 100
+julia --project -t 10 generate_tep.jl --p 0.01 --N_vertices 1000 --output results/erdos_renyi/N1000/ --N_graphs 10 --N_teps 100
 ```
 
 Hence in each of the folders `N100`, `N500`, and `N1000` there are 10 graphs with 50 teps each.
@@ -14,9 +26,6 @@ The adjacency matrices of the graphs are stored as `graph-$i.npz` files.
 For each network size the value of `p` is scaled such that the expected degree is 10.
 The default values of 0.03 for the infection rate (`lambda`) and 0.09 for the healing rate (`mu`) are used.
 The files can be read using the class provided in `read_tep.py`.
-
-Previously sampled TEPs have been generated in `N100_sampled/`, `N500_sampled/`, and `N1000_sampled/`.
-The networks or the TEPs do not coincide.
 
 ## Geometric graphs
 
@@ -27,13 +36,75 @@ The cutoff distance depends on the number of vertices such that the expected deg
 
 First generate the networks (see the file for details)
 ```bash
-julia --project results/geometric/build_graphs.jl
+julia --project results/geometric/build_graphs.jl 10
 ```
 Then generate the TEPs
 ```bash
-julia --project -t 10 generate_tep.jl --input results/geometric/N100/ --N_teps 50 --output results/geometric/N100/
-julia --project -t 10 generate_tep.jl --input results/geometric/N500/ --N_teps 50 --output results/geometric/N500/
-julia --project -t 10 generate_tep.jl --input results/geometric/N1000/ --N_teps 50 --output results/geometric/N1000/
+julia --project -t 10 generate_tep.jl --input results/geometric/N100/ --N_teps 100 --output results/geometric/N100/
+julia --project -t 10 generate_tep.jl --input results/geometric/N250/ --N_teps 100 --output results/geometric/N100/
+julia --project -t 10 generate_tep.jl --input results/geometric/N500/ --N_teps 100 --output results/geometric/N500/
+julia --project -t 10 generate_tep.jl --input results/geometric/N1000/ --N_teps 100 --output results/geometric/N1000/
+```
+## Regular
+
+The regular graphs are generated using the following command
+```bash
+julia --project results/regular/build_graphs.jl 10
+```
+Then the TEPs can be generated
+```bash
+julia --project -t 10 generate_tep.jl --input results/regular/N100/ --N_teps 100 --output results/regular/N100/
+julia --project -t 10 generate_tep.jl --input results/regular/N250/ --N_teps 100 --output results/regular/N250/
+julia --project -t 10 generate_tep.jl --input results/regular/N500/ --N_teps 100 --output results/regular/N500/
+julia --project -t 10 generate_tep.jl --input results/regular/N1000/ --N_teps 100 --output results/regular/N1000/
+```
+
+## Barabasi Albert
+
+The Barabasi Albert graphs are generated using the following command
+```bash
+julia --project results/barabasi-albert/build_graphs.jl 10
+```
+Then the TEPs can be generated
+```bash
+julia --project -t 10 generate_tep.jl --input results/barabasi-albert/N100/ --N_teps 100 --output results/barabasi-albert/N100/
+julia --project -t 10 generate_tep.jl --input results/barabasi-albert/N250/ --N_teps 100 --output results/barabasi-albert/N250/
+julia --project -t 10 generate_tep.jl --input results/barabasi-albert/N500/ --N_teps 100 --output results/barabasi-albert/N500/
+julia --project -t 10 generate_tep.jl --input results/barabasi-albert/N1000/ --N_teps 100 --output results/barabasi-albert/N1000/
+```
+
+## Scale Free
+
+Static scale free graphs introduce less non-trivial structure than barabasi albert graphs and might thus provide a
+clearer picture of the effects of the scale-free degree distribution.
+The exponent is set to -2.5.
+
+The Scale Free graphs are generated using the following command
+```bash
+julia --project results/scale-free/build_graphs.jl 10
+```
+Then the TEPs can be generated
+```bash
+julia --project -t 10 generate_tep.jl --input results/scale-free/N100/ --N_teps 100 --output results/scale-free/N100/
+julia --project -t 10 generate_tep.jl --input results/scale-free/N250/ --N_teps 100 --output results/scale-free/N250/
+julia --project -t 10 generate_tep.jl --input results/scale-free/N500/ --N_teps 100 --output results/scale-free/N500/
+julia --project -t 10 generate_tep.jl --input results/scale-free/N1000/ --N_teps 100 --output results/scale-free/N1000/
+```
+
+## Watts Strogatz
+
+The rewiring probability is set to .1.
+
+The Watts Strogatz graphs are generated using the following command
+```bash
+julia --project results/watts-strogatz/build_graphs.jl
+```
+Then the TEPs can be generated
+```bash
+julia --project -t 10 generate_tep.jl --input results/watts-strogatz/N100/ --N_teps 100 --output results/watts-strogatz/N100/
+julia --project -t 10 generate_tep.jl --input results/watts-strogatz/N250/ --N_teps 100 --output results/watts-strogatz/N250/
+julia --project -t 10 generate_tep.jl --input results/watts-strogatz/N500/ --N_teps 100 --output results/watts-strogatz/N500/
+julia --project -t 10 generate_tep.jl --input results/watts-strogatz/N1000/ --N_teps 100 --output results/watts-strogatz/N1000/
 ```
 
 ## Real-life graphs
@@ -62,8 +133,8 @@ julia --project results/real/convert_to_npz.jl
 ```
 Then the TEPs can be generated
 ```bash
-julia --project -t 10 generate_tep.jl --input results/real/infect-hyper --N_teps 50 --output results/real/infect-hyper
-julia --project -t 10 generate_tep.jl --input results/real/sociopatterns --N_teps 50 --output results/real/sociopatterns
+julia --project -t 10 generate_tep.jl --input results/real/infect-hyper --N_teps 100 --output results/real/infect-hyper
+julia --project -t 10 generate_tep.jl --input results/real/sociopatterns --N_teps 100 --output results/real/sociopatterns
 ```
 
 ## Legacy results
