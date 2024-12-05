@@ -1,6 +1,8 @@
 import numpy as np
 from pathlib import Path
 
+from mutual_information import mutual_information_matrix
+
 class SIS_TEP:
     __base_dir__ = "/home/DATA/datasets/TEP/gillespie_SIS/results"
     __abrv_to_full__ = {
@@ -87,3 +89,35 @@ class SIS_TEP:
         parts = path.stem.split('-')  # ['tep', 'abrv', 'i_graph', 'j_tep']
         graph_file = f"{parts[1]}-{parts[2]}.npz"
         return np.load(path.parent / graph_file)
+
+    def get_mutual_info_location(self, dt):
+        """
+        Return the name of the MIM file associated with the TEP.
+        """
+        path = Path(self.filename)
+        parts = path.stem.split('-')   # ['tep', 'abrv', 'i_graph', 'j_tep']
+        return path.parent / f"mim-{parts[1]}-{parts[2]}-{parts[3]}-{dt}.npz"
+
+    def generate_mutual_info(self, dt):
+        """
+        Generate the mutual information matrix for the TEP.
+        """
+        M = mutual_information_matrix(self.sample_with_dt(dt))
+        np.savez(self.get_mutual_info_location(dt), M=M)
+        return M
+
+    def load_mutual_info(self, dt):
+        """
+        Load the mutual information matrix for the TEP.
+        """
+        return np.load(self.get_mutual_info_location(dt))['M']
+
+    def load_or_generate_mutual_info(self, dt):
+        """
+        Load the mutual information matrix if it exists, otherwise generate it.
+        """
+        path = self.get_mutual_info_location(dt)
+        if path.exists():
+            return np.load(path)['M']
+        return self.generate_mutual_info(dt)
+

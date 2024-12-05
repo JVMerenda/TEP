@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score
 
+from mutual_information import mutual_information_matrix
 from read_tep import SIS_TEP
 
 class MLP(nn.Module):
@@ -73,63 +74,6 @@ def distribution(word_vec):
     y = probabilities.values()
     return x, y
 
-
-def joint_entropy(data1, data2):
-    """
-    Calcula a entropia conjunta entre dois conjuntos de dados de forma otimizada.
-    """
-    # Combine data1 e data2 em uma única matriz com 2 colunas
-    joint_pairs = np.stack((data1, data2), axis=-1)
-    
-    # Usa uma abordagem vetorizada para contar combinações únicas
-    unique, counts = np.unique(joint_pairs, axis=0, return_counts=True)
-    probabilities = counts / len(data1)  # Probabilidade de cada par
-    return -np.sum(probabilities * np.log2(probabilities))
-
-
-def joint_entropy_matrix(TEP_matrix, sequences):
-    """
-    Calcula a matriz de entropia conjunta (S_matrix) de forma otimizada.
-    """
-    N = len(TEP_matrix)
-    S_matrix = np.zeros((N, N))
-
-    # Calcula apenas a metade superior da matriz, aproveitando a simetria
-    for i in range(N):
-        for j in range(i, N):
-            # Calcula a entropia conjunta
-            S_matrix[i, j] = joint_entropy(sequences[i], sequences[j])
-            if i != j:  # Simetria
-                S_matrix[j, i] = S_matrix[i, j]
-
-    return S_matrix
-
-
-# Gerar sequências de 10 bits e convertê-las para decimais
-def generate_10bit_sequences(arr):
-    n = len(arr) - 10 + 1
-    return [int("".join(map(str, arr[i:i + 10])), 2) for i in range(n)]
-
-
-
-# Calcular a matriz Delta
-def delta_matrix(S_matrix, S_vec):
-    N = len(S_matrix)
-    Delta = np.zeros((N, N))
-    for i in range(N):
-        for j in range(i, N):
-            delta_ij = S_vec[i] + S_vec[j] - S_matrix[i, j]
-            Delta[i, j] = delta_ij
-            Delta[j, i] = delta_ij  # Simetria
-    return Delta
-
-# Cálculo da entropia
-def entropy(data):
-    unique, counts = np.unique(data, return_counts=True)
-    probabilities = counts / len(data)
-    return -np.sum(probabilities * np.log2(probabilities))
-
-
 def building_net(A):
     return nx.from_numpy_array(A)
 
@@ -138,16 +82,6 @@ def infer_p_edges(G):
     E = G.number_of_edges()
     p = (2 * E) / (n * (n - 1))  # Probabilidade de ligação
     return p
-
-def main(TEP_matrix):
-    """Função principal para calcular D."""
-    sequences = [generate_10bit_sequences(row) for row in TEP_matrix]
-    S_vec = [entropy(sequences[i]) for i in range(len(sequences))]
-    S_matrix = joint_entropy_matrix(TEP_matrix, sequences)
-    D_matrix = delta_matrix(S_matrix, S_vec)
-    return D_matrix.flatten()[:10000]
-    
-
 
 '''In this code, we do this procedure for only one TEP. But we can generalize it
 put a 'for' loop over all TEPs file in directory below
@@ -164,8 +98,8 @@ M_test = exact_tep.sample(1.)
 
 z = exact_tep.load_graph()
 y = z.flatten()
-X_train = main(M_train)
-X_test = main(M_test)
+X_train = mutual_information_matrix(M_train)
+X_test = mutual_information_matrix(M_test)
 
 
 
