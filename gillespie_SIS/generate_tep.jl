@@ -65,8 +65,10 @@ function main(
         μ::Float64, T::Float64, dts::Vector{Float64}, input::AbstractString,
         output_dir::AbstractString, create_plot::Bool, allow_dieout::Bool
     )
+    graph_pad = i -> lpad(i, length(string(N_graphs)), '0')
+    tep_pad = i -> lpad(i, length(string(N_teps)), '0')
     graphs = !isempty(input) ? read_graph(input) :
-        ["er-$i" => erdos_renyi(N_vertices, p) for i in 1:N_graphs]
+        ["er-$(graph_pad(i))" => erdos_renyi(N_vertices, p) for i in 1:N_graphs]
 
     isdir(output_dir) || mkdir(output_dir)
     cd(output_dir)
@@ -81,7 +83,7 @@ function main(
         # And simulate N_teps times
         inner_pb = Progress(N_teps; dt=1, desc="TEPs for graph $(g_name)")
         Threads.@threads for j in 1:N_teps
-            tepname = "tep-$g_name-$j.npz"
+            tepname = "tep-$g_name-$(tep_pad(j)).npz"
             if isfile(tepname)
                 @info "Skipping $(tepname), since it exists"
                 next!(inner_pb)
@@ -97,13 +99,13 @@ function main(
             if isempty(dts)
                 npzwrite(tepname, to_tep(sol))
             else
-                map(dt -> npzwrite("tep-$(g_name)-$j-$dt.npz", to_tep(sol, dt)), dts)
+                map(dt -> npzwrite("tep-$(g_name)-$(tep_pad(j))-$dt.npz", to_tep(sol, dt)), dts)
             end
             if(create_plot)
                 ts = 0:0.1:T
                 densities = [count(sol(t) .== 1) / nv(graph) for t in ts]
                 p = plot(ts, densities, title="Graph $(g_name), TEP $j"; legend=false)
-                savefig(p, "rho-$(g_name)-$j.png")
+                savefig(p, "rho-$(g_name)-$(tep_pad(j)).png")
             end
             next!(inner_pb)
         end

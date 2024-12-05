@@ -15,6 +15,10 @@ julia --project -e 'using Pkg; Pkg.instantiate()'
 ### 3. Run the code from the command line
 `julia --project generate_tep.jl --N_vertices 900 --N 4 --dt 1.`
 
+### 4. Experiments
+
+See the [experimental setup](experimental_setup.md) for more information on the processes that generated the data in `results`.
+
 ## Information about the script
 
 This script is meant to be used by command line, with optional arguments defined in the function below.
