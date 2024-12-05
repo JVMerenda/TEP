@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score
+from tqdm import tqdm
 
 from mutual_information import mutual_information_matrix
 from read_tep import SIS_TEP
@@ -89,6 +90,14 @@ put a 'for' loop over all TEPs file in directory below
 import os
 graph_model = "er" # choose from er, ba, ws, geo, euc, sf, reg, grid
 graph_size = 100 # choose from 100, 250, 500, 1000
+dt =.1
+
+mutual_info_matrices = []
+for i_graph in tqdm(range(1, 51)):
+    for j_tep in tqdm(range(1, 101)):
+        exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
+        mutual_info_matrices.append(exact_tep.load_or_generate_mutual_info(dt))
+
 i_graph = 1 # choose from 1, .., 50
 j_tep = 1 # choose from 1, .., 100
 

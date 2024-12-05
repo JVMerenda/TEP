@@ -98,12 +98,13 @@ class SIS_TEP:
         parts = path.stem.split('-')   # ['tep', 'abrv', 'i_graph', 'j_tep']
         return path.parent / f"mim-{parts[1]}-{parts[2]}-{parts[3]}-{dt}.npz"
 
-    def generate_mutual_info(self, dt):
+    def generate_mutual_info(self, dt, store=True):
         """
         Generate the mutual information matrix for the TEP.
         """
         M = mutual_information_matrix(self.sample_with_dt(dt))
-        np.savez(self.get_mutual_info_location(dt), M=M)
+        if store:
+            np.savez(self.get_mutual_info_location(dt), M=M)
         return M
 
     def load_mutual_info(self, dt):
