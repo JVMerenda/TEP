@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score
 
+from read_tep import SIS_TEP
 
 class MLP(nn.Module):
     def __init__(self, input_size):
@@ -60,10 +61,6 @@ def train_and_test(train_data, train_labels, test_data, test_labels, epochs=100,
         predicted_classes = predictions.tolist()
         return predicted_classes
 
-#This function imports the TEP matrix
-def tep_matrix(directory,file):
-    data = np.load(directory+file)
-    return np.transpose(data)
 
 #Well, let's build the frequence distribution
 #It calculates the frequence distribution for a single nodes
@@ -156,14 +153,16 @@ def main(TEP_matrix):
 put a 'for' loop over all TEPs file in directory below
 '''
 import os
-directory = '/home/DATA/datasets/SIS_teps_archive/N100/'
-file_train = 'tep-1-1-0.1.npz'
-file_test = 'tep-1-1-1.0.npz'
-graph = 'graph-1.npz'
+graph_model = "er" # choose from er, ba, ws, geo, euc, sf, reg, grid
+graph_size = 100 # choose from 100, 250, 500, 1000
+i_graph = 1 # choose from 1, .., 50
+j_tep = 1 # choose from 1, .., 100
 
-M_train = tep_matrix(directory, file_train)
-M_test = tep_matrix(directory, file_test)
-z = np.load(directory+graph)
+exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
+M_train = exact_tep.sample(0.1)
+M_test = exact_tep.sample(1.)
+
+z = exact_tep.load_graph()
 y = z.flatten()
 X_train = main(M_train)
 X_test = main(M_test)

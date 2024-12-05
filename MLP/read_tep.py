@@ -1,6 +1,19 @@
 import numpy as np
+from pathlib import Path
 
 class SIS_TEP:
+    __base_dir__ = "/home/DATA/datasets/TEP/gillespie_SIS/results"
+    __abrv_to_full__ = {
+        "er": "erdos-renyi",
+        "ba": "barabasi-albert",
+        "ws": "watts-strogatz",
+        "euc": "euclidean",
+        "geo": "geometric",
+        "grid": "grid",
+        "reg": "regular",
+        "sf": "scale-free",
+    }
+
     """
     Class to read a time-evolution profile (TEP) file for the SIS model.
     The TEP file should be a numpy binary file containing a 2D array with the following columns:
@@ -21,7 +34,11 @@ class SIS_TEP:
     tep = full_tep.sample([0.1, 0.25, 0.3])
     ```
     """
-    def __init__(self, filename):
+    def __init__(self, abrv, nb_vertices, i_graph, j_tep, nb_digits_g=2, nb_digits_tep=3):
+        self.filename = f"{self.__base_dir__}/{self.__abrv_to_full__[abrv]}/N{nb_vertices}/tep-{abrv}-{i_graph:0{nb_digits_g}d}-{j_tep:0{nb_digits_tep}d}.npz"
+        self.load_file(self.filename)
+
+    def load_file(self, filename):
         self.filename = filename
         self.data = np.load(filename)
         # time points at which a transition occurs
@@ -61,3 +78,12 @@ class SIS_TEP:
             return self.sample_with_dt(t)
         else:
             return self.sample_at_ts(t)
+
+    def load_graph(self):
+        """
+        Return the adjacency matrix of the graph associated with the TEP.
+        """
+        path = Path(self.filename)
+        parts = path.stem.split('-')  # ['tep', 'abrv', 'i_graph', 'j_tep']
+        graph_file = f"{parts[1]}-{parts[2]}.npz"
+        return np.load(path.parent / graph_file)
