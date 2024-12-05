@@ -81,6 +81,13 @@ function main(
         # And simulate N_teps times
         inner_pb = Progress(N_teps; dt=1, desc="TEPs for graph $(g_name)")
         Threads.@threads for j in 1:N_teps
+            tepname = "tep-$g_name-$j.npz"
+            if isfile(tepname)
+                @info "Skipping $(tepname), since it exists"
+                next!(inner_pb)
+                continue
+            end
+
             sol = solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv)
             while !is_success(sol)
                 sol = solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv)
@@ -88,7 +95,7 @@ function main(
 
             # Result storage
             if isempty(dts)
-                npzwrite("tep-$g_name-$j.npz", to_tep(sol))
+                npzwrite(tepname, to_tep(sol))
             else
                 map(dt -> npzwrite("tep-$(g_name)-$j-$dt.npz", to_tep(sol, dt)), dts)
             end
