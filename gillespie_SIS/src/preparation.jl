@@ -112,3 +112,58 @@ Each column corresponds to a time point and each row corresponds to a vertex.
 function to_tep(sol::ODESolution, dt::Real)
     return hcat([sol(t) for t in 0:dt:sol.t[end]]...)
 end
+
+"""
+    geometric_graph(N, D, p; d=2)
+
+Generates a geometric graph with `N` nodes in `d`-dimensional space.
+This is a deterministic euclidean graph with cutoff distance `D`, followed by a rewiring of
+one end of every edge with probability `p`.
+
+# Arguments
+- `N::Int`: Number of nodes in the graph.
+- `D::Float64`: Distance cutoff for connecting nodes with an edge.
+- `p::Float64`: Probability of rewiring each edge.
+- `d::Int`: Dimensionality of the space (default is 2).
+
+# Returns
+- `Graph`: A geometric graph where nodes are connected based on Euclidean distance and rewiring probability.
+
+# Description
+This function creates an initial Euclidean graph with `N` nodes placed in `d` dimensions. Edges are formed between nodes that are within a distance `D` of each other. Each existing edge is then considered for rewiring with probability `p`, where one end of the edge is randomly fixed, and the other end is connected to a new randomly chosen node not already connected to the fixed node.
+"""
+function geometric_graph(N, D, p; d=2)
+    g = euclidean_graph(N, d; cutoff=D)[1]
+    for e in edges(g)
+        if rand() < p
+            fixed = rand([e.src, e.dst])
+            rem_edge!(g, e)
+            new = rand(setdiff(1:N, [fixed]))
+            add_edge!(g, fixed, new)
+        end
+    end
+    return g
+end
+
+
+function build_graphs(g_model, N_graphs, parameter_combinations, general_dir, g_name="graph")
+    isdir(general_dir) || mkdir(general_dir)
+    n_digits = length(string(N_graphs))
+    for params in parameter_combinations
+        output_dir = joinpath(general_dir, "N$(params.N)")
+        isdir(output_dir) || mkdir(output_dir)
+        for i in 1:N_graphs
+            g = Graph(params[1])
+            while !is_connected(g)
+                g = g_model(params...)
+            end
+            filename = joinpath(output_dir, "$(g_name)-$(lpad(i, n_digits, '0')).npz")
+            if isfile(filename)
+                @info "Graph already exists: $filename"
+            else
+                @assert is_connected(g)
+                npzwrite(joinpath(output_dir, "$(g_name)-$(lpad(i, n_digits, '0')).npz"), adjacency_matrix(g))
+            end
+        end
+    end
+end
