@@ -70,7 +70,7 @@ function main(
     graphs = !isempty(input) ? read_graph(input) :
         ["er-$(graph_pad(i))" => erdos_renyi(N_vertices, p) for i in 1:N_graphs]
 
-    isdir(output_dir) || mkdir(output_dir)
+    isdir(output_dir) || mkpath(output_dir)
     cd(output_dir)
 
     is_success = sol -> allow_dieout || any(u[1] == 1 for u in sol[end])
