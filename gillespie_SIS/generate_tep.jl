@@ -63,8 +63,11 @@ julia --project -t 4 generate_tep.jl --input graphs/ --N_teps 10 --output graphs
 function main(
         N_graphs::Int64, N_teps::Int64, N_vertices::Int64, p::Float64, λ::Float64,
         μ::Float64, T::Float64, dts::Vector{Float64}, input::AbstractString,
-        output_dir::AbstractString, create_plot::Bool, allow_dieout::Bool
+        output_dir::AbstractString, use_msis::Bool, δ::Float64, ppn::Int64,
+        allow_dieout::Bool, create_plot::Bool
     )
+    Dynamic = use_msis ? MSIS : SIS
+
     graph_pad = i -> lpad(i, length(string(N_graphs)), '0')
     tep_pad = i -> lpad(i, length(string(N_teps)), '0')
     graphs = !isempty(input) ? read_graph(input) :
@@ -73,11 +76,9 @@ function main(
     isdir(output_dir) || mkdir(output_dir)
     cd(output_dir)
 
-    is_success = sol -> allow_dieout || any(u[1] == 1 for u in sol[end])
-
     # Generate N_graphs graphs
     for (g_name, graph) in graphs
-        jset, vtj, jtv = generate_jump_sets(graph)
+        jset, vtj, jtv = Dynamic.generate_jump_sets(graph)
         npzwrite("$(g_name).npz", adjacency_matrix(graph))
 
         # And simulate N_teps times
@@ -90,21 +91,20 @@ function main(
                 continue
             end
 
-            sol = solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv)
-            while !is_success(sol)
-                sol = solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv)
+            sol = Dynamic.solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv; δ, ppn)
+            while !Dynamic.is_success(sol, allow_dieout)
+                sol = Dynamic.solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv; δ, ppn)
             end
 
             # Result storage
             if isempty(dts)
-                npzwrite(tepname, to_tep(sol))
+                npzwrite(tepname, Dynamic.to_tep(sol))
             else
-                map(dt -> npzwrite("tep-$(g_name)-$(tep_pad(j))-$dt.npz", to_tep(sol, dt)), dts)
+                map(dt -> npzwrite("tep-$(g_name)-$(tep_pad(j))-$dt.npz", Dynamic.to_tep(sol, dt)), dts)
             end
             if(create_plot)
                 ts = 0:0.1:T
-                densities = [count(sol(t) .== 1) / nv(graph) for t in ts]
-                p = plot(ts, densities, title="Graph $(g_name), TEP $j"; legend=false)
+                p = Dynamic.plot_density(sol, ts, graph, g_name, j)
                 savefig(p, "rho-$(g_name)-$(tep_pad(j)).png")
             end
             next!(inner_pb)
@@ -117,4 +117,5 @@ end
 args = parse_command_line_args()
 args["plot"] && using Plots
 main(args["N_graphs"], args["N_teps"], args["N_vertices"], args["p"], args["lambda"],
-     args["mu"], args["T"], args["dt"], args["input"], args["output"], args["plot"], args["allow-dieout"])
+     args["mu"], args["T"], args["dt"], args["input"], args["output"], args["use-msis"],
+     args["delta"], args["ppn"], args["allow-dieout"], args["plot"])
