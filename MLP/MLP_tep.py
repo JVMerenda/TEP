@@ -90,10 +90,9 @@ put a 'for' loop over all TEPs file in directory below
 import os
 graph_model = "er" # choose from er, ba, ws, geo, euc, sf, reg, grid
 graph_size = 100 # choose from 100, 250, 500, 1000
-dt =.1
-
 i_graph = 1 # choose from 1, .., 50
 j_tep = 1 # choose from 1, .., 100
+dt =.1
 
 exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
 M_train = exact_tep.sample(0.1)

@@ -46,9 +46,9 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 - `--allow-dieout` Flag to also store the result if the infection has died out by time `T`
 
 ### Stores in the output directory
-- `graph-$i.npz` Adjacency matrix of the generated graph
-- `graph-$i-$j.npz` Tep of the $j-th simulation of the $i-th graph (if --dt is not given)
-- `graph-$i-$j-$dt.npz` Tep of the $j-th simulation of the $i-th graph sampled at time step $dt
+- `er-\$i.npz` Adjacency matrix of the generated graph
+- `tep-'graphname'-\$i-\$j.npz` Tep of the \$j-th simulation of the \$i-th graph (if --dt is not given)
+- `tep-'graphname'-\$i-\$j-\$dt.npz` Tep of the \$j-th simulation of the \$i-th graph sampled at time step \$dt
 - `rho-$i-$j-$dt.npz` If `--plot`. Evolution of the infectious density of the $j-th simulation of the $i-th graph sampled at time step $dt
 
 ### Example
