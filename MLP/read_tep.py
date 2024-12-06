@@ -37,11 +37,26 @@ class SIS_TEP:
     ```
     """
     def __init__(self, abrv, nb_vertices, i_graph, j_tep, nb_digits_g=2, nb_digits_tep=3):
-        self.filename = f"{self.__base_dir__}/{self.__abrv_to_full__[abrv]}/N{nb_vertices}/tep-{abrv}-{i_graph:0{nb_digits_g}d}-{j_tep:0{nb_digits_tep}d}.npz"
-        self.load_file(self.filename)
+        self.root = f"{self.__base_dir__}/{self.__abrv_to_full__[abrv]}/N{nb_vertices}"
+        self.network_type = abrv
+        self.graph_id = f"{i_graph:0{nb_digits_g}d}"
+        self.tep_id = f"{j_tep:0{nb_digits_tep}d}"
+        self.load_tep()
 
-    def load_file(self, filename):
-        self.filename = filename
+    def get_tep_location(self):
+        return f"{self.root}/tep-{self.network_type}-{self.graph_id}-{self.tep_id}.npz"
+
+    def get_graph_location(self):
+        return f"{self.root}/{self.network_type}-{self.graph_id}.npz"
+    
+    def get_mutual_info_location(self, dt):
+        """
+        Return the name of the MIM file associated with the TEP.
+        """
+        return f"{self.root}/mim-{self.network_type}-{self.graph_id}-{self.tep_id}-{dt:.2f}.npz"
+
+    def load_tep(self):
+        filename = self.get_tep_location()
         self.data = np.load(filename)
         # time points at which a transition occurs
         self.time_points = self.data[:, 0]
@@ -85,18 +100,7 @@ class SIS_TEP:
         """
         Return the adjacency matrix of the graph associated with the TEP.
         """
-        path = Path(self.filename)
-        parts = path.stem.split('-')  # ['tep', 'abrv', 'i_graph', 'j_tep']
-        graph_file = f"{parts[1]}-{parts[2]}.npz"
-        return np.load(path.parent / graph_file)
-
-    def get_mutual_info_location(self, dt):
-        """
-        Return the name of the MIM file associated with the TEP.
-        """
-        path = Path(self.filename)
-        parts = path.stem.split('-')   # ['tep', 'abrv', 'i_graph', 'j_tep']
-        return path.parent / f"mim-{parts[1]}-{parts[2]}-{parts[3]}-{dt}.npz"
+        return np.load(self.get_graph_location())
 
     def generate_mutual_info(self, dt, store=True):
         """
@@ -117,8 +121,11 @@ class SIS_TEP:
         """
         Load the mutual information matrix if it exists, otherwise generate it.
         """
-        path = self.get_mutual_info_location(dt)
+        path = Path(self.get_mutual_info_location(dt))
         if path.exists():
-            return np.load(path)['M']
+            try:
+                return np.load(path)['M']
+            except:
+                pass
         return self.generate_mutual_info(dt)
 

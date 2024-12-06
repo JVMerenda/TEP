@@ -92,12 +92,6 @@ graph_model = "er" # choose from er, ba, ws, geo, euc, sf, reg, grid
 graph_size = 100 # choose from 100, 250, 500, 1000
 dt =.1
 
-mutual_info_matrices = []
-for i_graph in tqdm(range(1, 51)):
-    for j_tep in tqdm(range(1, 101)):
-        exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
-        mutual_info_matrices.append(exact_tep.load_or_generate_mutual_info(dt))
-
 i_graph = 1 # choose from 1, .., 50
 j_tep = 1 # choose from 1, .., 100
 
@@ -106,6 +100,14 @@ M_train = exact_tep.sample(0.1)
 M_test = exact_tep.sample(1.)
 
 z = exact_tep.load_graph()
+
+mutual_info_matrices = []
+for i_graph in tqdm(range(1, 51)):
+    for j_tep in tqdm(range(1, 101)):
+        exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
+        mutual_info_matrices.append(exact_tep.load_or_generate_mutual_info(dt))
+
+
 y = z.flatten()
 X_train = mutual_information_matrix(M_train)
 X_test = mutual_information_matrix(M_test)

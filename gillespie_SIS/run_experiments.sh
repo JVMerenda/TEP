@@ -4,7 +4,7 @@ N_THREADS=10
 N_GRAPHS=50
 N_TEPS=100
 
-GRAPH_TYPES=("geometric" "regular" "barabasi-albert" "scale-free" "watts-strogatz" "euclidean" "grid") # excluding erdos-renyi and real, since they are handled differently
+GRAPH_TYPES=("regular" "barabasi-albert" "scale-free" "watts-strogatz" "euclidean" "grid" "geometric") # excluding erdos-renyi and real, since they are handled differently, geometric acted up, and has to be handled later
 NODE_COUNTS=(100 250 500 1000)
 
 echo "Generating graphs... ($N_GRAPHS per model)"

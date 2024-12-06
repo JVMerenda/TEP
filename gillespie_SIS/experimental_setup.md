@@ -10,7 +10,7 @@ bash run_experiments.sh
 ```
 Or as a detached process
 ```bash
-nohup bash run_experiments.sh > teps.o.log 2>&1 teps.e.log&
+nohup bash run_experiments.sh > teps.o.log 2> teps.e.log&
 ```
 
 ## The Erdos Renyi Graphs
