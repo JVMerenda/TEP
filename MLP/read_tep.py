@@ -67,12 +67,15 @@ class SIS_TEP:
 
     def get_graph_location(self):
         return f"{self.root}/{self.network_type}-{self.graph_id}.npz"
-    
+
     def get_mutual_info_location(self, dt):
         return f"{self.root}/mim-{self.network_type}-{self.graph_id}-{self.tep_id}-{dt:.2f}.npz"
 
     def get_sample_location(self, dt):
         return f"{self.root}/tep-{self.network_type}-{self.graph_id}-{self.tep_id}-{dt:.2f}.npy"
+
+    def get_sample_location(self, dt, p):
+        return f"{self.root}/tep-{self.network_type}-{self.graph_id}-{self.tep_id}-{dt:.2f}-p{p:.3f}.npy"
 
     def load_tep(self):
         """
@@ -97,26 +100,40 @@ class SIS_TEP:
         # The state of the system at time t is the parity of the number of times each vertex has transitioned up to time t.
         return np.array([np.count_nonzero(self.vertex_indices[:idx+1] == v) % 2 for v in range(self.N_vertices)])
 
-    def sample_with_dt(self, dt):
+    def __call__(self, t, p):
         """
-        Samples the TEP with a time step dt.
+        Returns the state of the system at time t with noise.
+        The state of each vertex at time t is changed with probability p.
         """
-        return np.array([self(t) for t in np.arange(0, self.max_T + dt, dt)])
+        x = self(t)
+        for i in range(self.N_vertices):
+            if np.random.rand() < p:
+                x[i] = 1 - x[i]
 
-    def sample_at_ts(self, ts):
+    def sample_at_ts(self, ts, p=0):
         """
-        Samples the TEP at time points ts.
+        Sample with noise at time points ts.
+        The state of each vertex at each time point is chosen randomly with probability p.
         """
-        return np.array([self(t) for t in ts])
+        call_f = (lambda t: self(t, p)) if p > 0 else (lambda t: self(t))
+        return np.array([call_f(t) for t in ts])
 
-    def sample(self, t):
+    def sample_with_dt(self, dt, p=0):
+        """
+        Samples the TEP with a time step dt and noise.
+        """
+        ts = np.arange(0, self.max_T + dt, dt)
+        return self.sample_at_ts(ts, p) if p > 0 else self(ts)
+
+    def sample(self, t, p=0):
         """
         Generate a TEP at time points ts (if ts is an array) or with a time step dt (if t is a number).
+        If p is provided it acts as a probability of flipping the state of each vertex.
         """
         if isinstance(t, float):
-            return self.sample_with_dt(t)
+            return self.sample_with_dt(t, p) if p > 0 else self.sample_with_dt(t)
         else:
-            return self.sample_at_ts(t)
+            return self.sample_at_ts(t, p) if p > 0 else self.sample_at_ts(t)
 
     def store_sample(self, dt):
         """
@@ -124,6 +141,13 @@ class SIS_TEP:
         "../tep-{network_type}-{graph_id}-{tep_id}-{dt:.2f}.npy".
         """
         np.save(self.get_sample_location(dt), self.sample_with_dt(dt))
+
+    def store_sample(self, dt, p):
+        """
+        Store the TEP sample with time step dt and noise paramater p at location
+        "../tep-{network_type}-{graph_id}-{tep_id}-{dt:.2f}-p{p:.3f}.npy".
+        """
+        np.save(self.get_sample_location(dt, p), self.sample_with_dt(dt, p))
 
     def load_graph(self):
         """
