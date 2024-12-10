@@ -13,6 +13,12 @@ Or as a detached process
 nohup bash run_experiments.sh > teps.o.log 2> teps.e.log&
 ```
 
+There are two type of experiments. In SIS the nodes are individual agents that can be in one of two states: susceptible or infected.
+In MSIS the nodes are groups of agents that can be in one of two states: susceptible or infected.
+There is movement between the groups.
+Agents van only infect individuals in the same group.
+To use MSIS use the flag `--use-msis` and it is best to increase the infection rate to e.g. 0.3.
+
 ## The Erdos Renyi Graphs
 
 The data in this folder has been generated using the following invocations of `generate_tep.jl`:
