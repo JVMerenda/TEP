@@ -2,8 +2,6 @@ module GenerateTep
 
 using ArgParse
 using Graphs
-using NetworkJumpProcesses
-using JumpProcesses
 using NPZ
 
 __precompile__()

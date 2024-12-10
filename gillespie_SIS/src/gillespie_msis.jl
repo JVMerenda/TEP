@@ -3,6 +3,7 @@ module MSIS
 using Graphs
 using NetworkJumpProcesses
 using JumpProcesses
+using Plots
 
 """
     generate_jump_set(graph)
@@ -84,6 +85,11 @@ Each column corresponds to a time point and each row corresponds to a vertex.
 """
 function to_tep(sol::ODESolution, dt::Real)
     return hcat([sol(t)[2:2:end] for t in 0:dt:sol.t[end]]...)
+end
+
+function plot_density(sol::ODESolution, ts, graph, g_name, j)
+    densities = hcat([sol(t)[2:2:end] for t in ts]...)'
+    return Plots.plot(ts, densities, title="Graph $(g_name), TEP $j"; legend=false)
 end
 
 end

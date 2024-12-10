@@ -71,9 +71,11 @@ function main(
         # And simulate N_teps times
         inner_pb = Progress(N_teps; dt=1, desc="TEPs for graph $(g_name)")
         Threads.@threads for j in 1:N_teps
-            tepname = "tep-$g_name-$(tep_pad(j)).npz"
-            if isfile(tepname)
-                @info "Skipping $(tepname), since it exists"
+            tepnames = isempty(dts) ? 
+                ["tep-$g_name-$(tep_pad(j)).npz", ] :
+                ["tep-$g_name-$(tep_pad(j))-$dt.npz" for dt in dts]
+            if all(tepname -> isfile(tepname), tepnames)
+                @info "Skipping $(tepnames), since it exists"
                 next!(inner_pb)
                 continue
             end

@@ -3,6 +3,7 @@ module SIS
 using Graphs
 using NetworkJumpProcesses
 using JumpProcesses
+using Plots
 
 const StateType = UInt8
 const susceptible = zero(StateType)
