@@ -103,10 +103,13 @@ def build_train_test_set(graph_size, graph_models, max_i_graph, max_graph_train,
 put a 'for' loop over all TEPs file in directory below
 '''
 import os
-graph_models = ["er",] # choose from er, ba, ws, geo, euc, sf, reg, grid
+graph_models = [
+    "er", "ba", "ws", "geo", "euc", "sf", "reg", "grid",
+    "ermd", "bamd", "wsmd", "geomd", "eucmd", "sfmd", "regmd", "gridmd"
+] # choose from er, ba, ws, geo, euc, sf, reg, grid [+ "md"]
 graph_size = 100 # choose from 100, 250, 500, 1000
 i_graph = 1 # choose from 1, .., 50
-j_tep = 1 # choose from 1, .., 100
+j_tep = 1 # choose from 1, .., 100,
 dt =.1
 
 train, test = build_train_test_set(graph_size, graph_models, 50, 40, 100, 80, dt)

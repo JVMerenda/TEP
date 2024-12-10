@@ -44,6 +44,11 @@ class SIS_TEP:
         "sf": "scale-free",
     }
 
+    def abrv_to_full(self, abrv):
+        if abrv[-2:] == "md"
+            return self.__abrv_to_full__[abrv[:-2]] + "-multi-degree"
+        return self.__abrv_to_full__[abrv[:-2]]
+
     def __init__(self, abrv, nb_vertices, i_graph, j_tep, nb_digits_g=2, nb_digits_tep=3):
         """
         Initialize the TEP reader.
@@ -56,7 +61,7 @@ class SIS_TEP:
             nb_digits_g (int, optional): Number of digits that the graph ID is stored in. Defaults to 2.
             nb_digits_tep (int, optional): Number of digits for TEP ID is stored in. Defaults to 3
         """
-        self.root = f"{self.__base_dir__}/{self.__abrv_to_full__[abrv]}/N{nb_vertices}"
+        self.root = f"{self.__base_dir__}/{self.abrv_to_full(abrv)}/N{nb_vertices}"
         self.network_type = abrv
         self.graph_id = f"{i_graph:0{nb_digits_g}d}"
         self.tep_id = f"{j_tep:0{nb_digits_tep}d}"

@@ -119,6 +119,21 @@ function geometric_graph(N, D, p; d=2)
     return g
 end
 
+"""
+    discretize_distribution(dist::Distribution, support)
+
+Evaluate the pdf of `dist` at support and return a discrete
+distribution based on those normalized valies.
+"""
+function discretize_distribution(dist::Distribution, support)
+    ps = [pdf(dist, x) for x in support]
+    sps = sum(ps)
+    return DiscreteNonParametric(support, ps ./ sps)
+end
+
+function unpack(params)
+    return [p isa Distribution ? rand(p) : p for p in params]
+end
 
 function build_graphs(g_model, N_graphs, parameter_combinations, general_dir, g_name="graph")
     isdir(general_dir) || mkdir(general_dir)
@@ -129,13 +144,12 @@ function build_graphs(g_model, N_graphs, parameter_combinations, general_dir, g_
         for i in 1:N_graphs
             g = Graph(params[1])
             while !is_connected(g)
-                g = g_model(params...)
+                g = g_model(unpack(params)...)
             end
             filename = joinpath(output_dir, "$(g_name)-$(lpad(i, n_digits, '0')).npz")
             if isfile(filename)
                 @info "Graph already exists: $filename"
             else
-                @assert is_connected(g)
                 npzwrite(joinpath(output_dir, "$(g_name)-$(lpad(i, n_digits, '0')).npz"), adjacency_matrix(g))
             end
         end

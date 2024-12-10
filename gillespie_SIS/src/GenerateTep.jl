@@ -1,6 +1,7 @@
 module GenerateTep
 
 using ArgParse
+using Distributions
 using Graphs
 using NPZ
 
@@ -10,6 +11,7 @@ export SIS
 export MSIS
 export parse_command_line_args
 export read_graph
+export discretize_distribution
 export geometric_graph
 export build_graphs
 export copy_graph
