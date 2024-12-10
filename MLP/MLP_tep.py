@@ -84,33 +84,35 @@ def infer_p_edges(G):
     p = (2 * E) / (n * (n - 1))  # Probabilidade de ligação
     return p
 
+def build_train_test_set(graph_size, graph_models, max_i_graph, max_graph_train, max_j_tep, max_j_tep_train, dt=.1):
+    train = []
+    test = []
+
+    for graph_model in graph_models:
+        for i_graph in tqdm(range(1, max_i_graph + 1)):
+            for j_tep in range(1, max_j_tep + 1):
+                exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
+                M = exact_tep.load_or_generate_mutual_info(dt)
+                if j_tep <= max_j_tep_train and i_graph <= max_graph_train:
+                    train.append((M, exact_tep.load_graph()))
+                else:
+                    test.append((M, exact_tep.load_graph()))
+    return train, test
+
 '''In this code, we do this procedure for only one TEP. But we can generalize it
 put a 'for' loop over all TEPs file in directory below
 '''
 import os
-graph_model = "er" # choose from er, ba, ws, geo, euc, sf, reg, grid
+graph_models = ["er",] # choose from er, ba, ws, geo, euc, sf, reg, grid
 graph_size = 100 # choose from 100, 250, 500, 1000
 i_graph = 1 # choose from 1, .., 50
 j_tep = 1 # choose from 1, .., 100
 dt =.1
 
-exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
+train, test = build_train_test_set(graph_size, graph_models, 50, 40, 100, 80, dt)
+
+exact_tep = SIS_TEP(graph_models[0], graph_size, i_graph, j_tep)
 M_train = exact_tep.sample(0.1)
 M_test = exact_tep.sample(1.)
 
 z = exact_tep.load_graph()
-
-mutual_info_matrices = []
-for i_graph in tqdm(range(1, 51)):
-    for j_tep in tqdm(range(1, 101)):
-        exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
-        mutual_info_matrices.append(exact_tep.load_or_generate_mutual_info(dt))
-
-
-y = z.flatten()
-X_train = mutual_information_matrix(M_train)
-X_test = mutual_information_matrix(M_test)
-
-
-
-
