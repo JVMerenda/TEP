@@ -90,40 +90,36 @@ class SIS_TEP:
         self.N_vertices = max(self.vertex_indices) + 1
         self.max_T = self.time_points[-1]
 
-    def __call__(self, t):
+    def __call__(self, t, p=0):
         """
-        Returns the state of the system at time t.
+        Returns the state of the system at time t with noise.
+        The state of each vertex at time t is changed with probability p.
         """
         if t < 0:
             raise ValueError("t must be non-negative.")
         idx = np.searchsorted(self.time_points, t, side='right')
         # The state of the system at time t is the parity of the number of times each vertex has transitioned up to time t.
-        return np.array([np.count_nonzero(self.vertex_indices[:idx+1] == v) % 2 for v in range(self.N_vertices)])
+        x = np.array([np.count_nonzero(self.vertex_indices[:idx+1] == v) % 2 for v in range(self.N_vertices)])
 
-    def __call__(self, t, p):
-        """
-        Returns the state of the system at time t with noise.
-        The state of each vertex at time t is changed with probability p.
-        """
-        x = self(t)
-        for i in range(self.N_vertices):
-            if np.random.rand() < p:
-                x[i] = 1 - x[i]
+        if p > 0:
+            for i in range(self.N_vertices):
+                if np.random.rand() < p:
+                    x[i] = 1 - x[i]
+        return x
 
     def sample_at_ts(self, ts, p=0):
         """
         Sample with noise at time points ts.
         The state of each vertex at each time point is chosen randomly with probability p.
         """
-        call_f = (lambda t: self(t, p)) if p > 0 else (lambda t: self(t))
-        return np.array([call_f(t) for t in ts])
+        return np.array([self(t, p) for t in ts])
 
     def sample_with_dt(self, dt, p=0):
         """
         Samples the TEP with a time step dt and noise.
         """
         ts = np.arange(0, self.max_T + dt, dt)
-        return self.sample_at_ts(ts, p) if p > 0 else self(ts)
+        return self.sample_at_ts(ts, p)
 
     def sample(self, t, p=0):
         """
@@ -131,9 +127,9 @@ class SIS_TEP:
         If p is provided it acts as a probability of flipping the state of each vertex.
         """
         if isinstance(t, float):
-            return self.sample_with_dt(t, p) if p > 0 else self.sample_with_dt(t)
+            return self.sample_with_dt(t, p)
         else:
-            return self.sample_at_ts(t, p) if p > 0 else self.sample_at_ts(t)
+            return self.sample_at_ts(t, p)
 
     def store_sample(self, dt):
         """
