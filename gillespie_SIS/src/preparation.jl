@@ -9,25 +9,10 @@ function parse_command_line_args()
         arg_type = String
         default = ""
 
-        "--N_graphs"
-        help = "Number of graphs to generate"
-        arg_type = Int64
-        default = 1
-
-        "--N_vertices"
-        help = "Number of vertices per graph"
-        arg_type = Int64
-        default = 1000
-
         "--N_teps"
         help = "Number of teps per graph"
         arg_type = Int64
         default = 1
-
-        "--p"
-        help = "Edge probability"
-        arg_type = Float64
-        default = 0.01
 
         "--lambda"
         help = "Infection rate"

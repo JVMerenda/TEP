@@ -32,7 +32,7 @@ class SIS_TEP:
         >>> M = tep.load_or_generate_mutual_info(0.1)  # Load mutual information matrix
     """
     
-    __base_dir__ = "/home/DATA/datasets/TEP/gillespie_SIS/results"
+    __base_dir__ = "/home/DATA/datasets/TEP/gillespie_SIS/results/sis"
     __abrv_to_full__ = {
         "er": "erdos-renyi",
         "ba": "barabasi-albert",
