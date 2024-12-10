@@ -4,11 +4,13 @@
 DYN_DIR="msis"
 LAMBDA=0.3
 MSIS_FLAG="--use-msis"
+DT_FLAG="--dt 0.1"
 
 # For sis
-DYN_DIR="sis"
-LAMBDA=0.03
-MSIS_FLAG=""
+# DYN_DIR="sis"
+# LAMBDA=0.03
+# MSIS_FLAG=""
+# DT_FLAG=""
 
 N_THREADS=10
 N_GRAPHS=50
@@ -33,7 +35,7 @@ for n in "${NODE_COUNTS[@]}"; do
     for graph in "${GRAPH_TYPES[@]}"; do
         echo ""
         echo "Running experiments for ${graph} (size ${n})"
-        julia --project -t "$N_THREADS" generate_tep.jl "${MSIS_FLAG}" --lambda "$LAMBDA" --input "results/graphs/${graph}/N${n}/" --N_teps "$N_TEPS" --output "results/${DYN_DIR}/${graph}/N${n}/"
+        julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input "results/graphs/${graph}/N${n}/" --N_teps "$N_TEPS" --output "results/${DYN_DIR}/${graph}/N${n}/" $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
     done
 done
 

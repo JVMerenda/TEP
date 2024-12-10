@@ -66,7 +66,7 @@ function main(
     # Generate N_graphs graphs
     for (g_name, graph) in graphs
         jset, vtj, jtv = Dynamic.generate_jump_sets(graph)
-        npzwrite("$(g_name).npz", adjacency_matrix(graph))
+        new_graph = copy_graph(graph, joinpath(pwd(), "$(g_name).npz")) # store copy of the graph with th results
 
         # And simulate N_teps times
         inner_pb = Progress(N_teps; dt=1, desc="TEPs for graph $(g_name)")
@@ -74,7 +74,7 @@ function main(
             tepnames = isempty(dts) ? 
                 ["tep-$g_name-$(tep_pad(j)).npz", ] :
                 ["tep-$g_name-$(tep_pad(j))-$dt.npz" for dt in dts]
-            if all(tepname -> isfile(tepname), tepnames)
+            if !new_graph && all(tepname -> isfile(tepname), tepnames)
                 @info "Skipping $(tepnames), since it exists"
                 next!(inner_pb)
                 continue
@@ -87,7 +87,7 @@ function main(
 
             # Result storage
             if isempty(dts)
-                npzwrite(tepname, Dynamic.to_tep(sol))
+                npzwrite(tepnames[1], Dynamic.to_tep(sol))
             else
                 map(dt -> npzwrite("tep-$(g_name)-$(tep_pad(j))-$dt.npz", Dynamic.to_tep(sol, dt)), dts)
             end

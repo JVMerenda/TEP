@@ -77,6 +77,16 @@ function read_graph(f::AbstractString)
     end
 end
 
+function copy_graph(g, path)
+    if isfile(path)
+        a2 = npzread(path)
+        @assert a2 == adjacency_matrix(g) "Different graphs with same name are given in the experiment"
+        return false
+    end
+    npzwrite(path, adjacency_matrix(g))
+    return true
+end
+
 """
     geometric_graph(N, D, p; d=2)
 

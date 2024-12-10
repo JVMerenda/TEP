@@ -12,6 +12,7 @@ export parse_command_line_args
 export read_graph
 export geometric_graph
 export build_graphs
+export copy_graph
 
 include(joinpath(@__DIR__, "gillespie_sis.jl"))
 include(joinpath(@__DIR__, "gillespie_msis.jl"))
