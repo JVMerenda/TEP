@@ -45,9 +45,9 @@ class SIS_TEP:
     }
 
     def abrv_to_full(self, abrv):
-        if abrv[-2:] == "md"
+        if abrv[-2:] == "md":
             return self.__abrv_to_full__[abrv[:-2]] + "-multi-degree"
-        return self.__abrv_to_full__[abrv[:-2]]
+        return self.__abrv_to_full__[abrv]
 
     def __init__(self, abrv, nb_vertices, i_graph, j_tep, nb_digits_g=2, nb_digits_tep=3):
         """
