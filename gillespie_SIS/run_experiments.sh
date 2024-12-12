@@ -1,18 +1,18 @@
 #!/bin/bash
 
 # For msis
-# DYN_DIR="msis"
-# LAMBDA=0.3
-# MSIS_FLAG="--use-msis"
-# DT_FLAG="--dt 0.1"
+DYN_DIR="msis"
+LAMBDA=0.3
+MSIS_FLAG="--use-msis"
+DT_FLAG="--dt 0.1"
 
 # For sis
-DYN_DIR="sis"
-LAMBDA=0.03
-MSIS_FLAG=""
-DT_FLAG=""
+# DYN_DIR="sis"
+# LAMBDA=0.03
+# MSIS_FLAG=""
+# DT_FLAG=""
 
-N_THREADS=10
+N_THREADS=6
 N_GRAPHS=50
 N_TEPS=100
 
@@ -42,5 +42,5 @@ done
 
 echo ""
 echo "Running experiments for real networks"
-julia --project -t "$N_THREADS" generate_tep.jl "${MSIS_FLAG}" --lambda "$LAMBDA" --input results/graphs/real/infect-hyper --N_teps "$N_TEPS" --output results/${DYN_DIR}/real/infect-hyper
-julia --project -t "$N_THREADS" generate_tep.jl "${MSIS_FLAG}" --lambda "$LAMBDA" --input results/graphs/real/sociopatterns --N_teps "$N_TEPS" --output results/${DYN_DIR}/real/sociopatterns
+julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input results/graphs/real/infect-hyper --N_teps "$N_TEPS" --output results/${DYN_DIR}/real/infect-hyper $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
+julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input results/graphs/real/sociopatterns --N_teps "$N_TEPS" --output results/${DYN_DIR}/real/sociopatterns $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
