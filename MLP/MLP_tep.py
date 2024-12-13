@@ -1,121 +1,125 @@
-import matplotlib.pyplot as plt
-#import networkx as nx
+import os
 import numpy as np
-from collections import Counter
+import pandas as pd
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from sklearn.metrics import accuracy_score
-from tqdm import tqdm
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, Dataset
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
-from mutual_information import mutual_information_matrix
-from read_tep import SIS_TEP
+# Path to save the model weights
+model_path = "mlp_weights.pth"
 
+# Load the train and test dataset
+train_data = pd.read_csv('train_dataset.csv', header=None).values  # M x N
+train_labels = pd.read_csv('train_labels.csv', header=None).values  # M x N
+
+test_data = pd.read_csv('test_dataset.csv', header=None).values  # c x N
+test_labels = pd.read_csv('test_labels.csv', header=None).values  # c x N
+
+# Dataset
+class CustomDataset(Dataset):
+    def __init__(self, data, labels):
+        self.data = torch.tensor(data, dtype=torch.float32)
+        self.labels = torch.tensor(labels, dtype=torch.float32)
+    
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, idx):
+        return self.data[idx], self.labels[idx]
+
+# make the dataloader
+train_dataset = CustomDataset(train_data, train_labels)
+test_dataset = CustomDataset(test_data, test_labels)
+
+batch_size = 32
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)  
+
+# MLP architecture
 class MLP(nn.Module):
-    def __init__(self, input_size):
+    def __init__(self, input_size, hidden_size, output_size):
         super(MLP, self).__init__()
-        self.fc1 = nn.Linear(input_size, 128)  
-        self.fc2 = nn.Linear(128, 64)          
-        self.fc3 = nn.Linear(64, 1)           
-        self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
-
+        self.model = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, output_size),
+            nn.Sigmoid()  # Binary output
+        )
+    
     def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.sigmoid(self.fc3(x))
-        return x
+        return self.model(x)
 
-def train_and_test(train_data, train_labels, test_data, test_labels, epochs=100, learning_rate=0.001):
-    train_data = np.atleast_2d(train_data).T if train_data.ndim == 1 else train_data
-    test_data = np.atleast_2d(test_data).T if test_data.ndim == 1 else test_data
-    input_size = train_data.shape[1]
-    model = MLP(input_size)
-    criterion = nn.BCELoss()  # Binary Cross-Entropy Loss
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+# Model Settings
+input_size = train_data.shape[1]  # size N
+hidden_size = 4096
+output_size = train_labels.shape[1]  # Size N too
 
+model = MLP(input_size, hidden_size, output_size)
+criterion = nn.BCELoss()  # Binary Cross-Entropy
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    train_data = torch.tensor(train_data, dtype=torch.float32)
-    train_labels = torch.tensor(train_labels, dtype=torch.float32).view(-1, 1)
-    test_data = torch.tensor(test_data, dtype=torch.float32)
-    test_labels = torch.tensor(test_labels, dtype=torch.float32)
+# Inicializar lista para salvar erros por época
+epoch_losses = []
 
-    for epoch in range(epochs):
+# Verify if the model already was trainned 
+if os.path.exists(model_path):
+    # Load the saved weights
+    model.load_state_dict(torch.load(model_path))
+    print("Pesos do modelo carregados com sucesso.")
+else:
+    # Train
+    print("Treining The Model...")
+    num_epochs = 200
+    for epoch in range(num_epochs):
         model.train()
-        optimizer.zero_grad()
-        outputs = model(train_data)
-        loss = criterion(outputs, train_labels)
-        loss.backward()
-        optimizer.step()
-        if epoch % 10 == 0:
-            print(f"Epoch {epoch}/{epochs}, Loss: {loss.item():.4f}")
-        # Update the learning rate
-        scheduler.step()
+        epoch_loss = 0
+        for inputs, targets in train_loader:
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+        
+        epoch_losses.append(epoch_loss / len(train_loader))
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss / len(train_loader):.4f}")
+    
+    # Save the weights
+    torch.save(model.state_dict(), model_path)
+    print(f"Treinamento concluído.")
 
-    model.eval()
-    with torch.no_grad():
-        predictions = model(test_data)
-        print(predictions)
-        predictions = (predictions >= 0.5).float().squeeze()  # Convertendo para classes binárias
-        accuracy = accuracy_score(test_labels, predictions)
-        print(f"Acurácia no conjunto de teste: {accuracy:.4f}")
-        predicted_classes = predictions.tolist()
-        return predicted_classes
+    # Plot the evolution of the loss
+    plt.figure(figsize=(8, 6))
+    plt.plot(range(1, num_epochs + 1), epoch_losses, label="Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Loss per epoch")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig('erro.jpg')
 
+# Evaluation of the test set
+model.eval()
+with torch.no_grad():
+    accuracies = []
+    for i, (inputs, targets) in enumerate(test_loader):
+        outputs = model(inputs).round()  # Binary output (0 or 1)
+        correct = (outputs == targets).sum(dim=1).item()
+        accuracy = correct / targets.size(1)  # Accuracy
+        accuracies.append(accuracy)
+        print(f"Test {i+1}: Accuracy = {accuracy:.2%}")
+        
+        # Confusion matrices
+        targets_flat = targets.numpy().flatten()
+        outputs_flat = outputs.numpy().flatten()
+        cm = confusion_matrix(targets_flat, outputs_flat, labels=[0, 1])
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
+        disp.plot(cmap="Blues", values_format="d")
+        plt.title(f"Confusion matrix {i+1}")
+        plt.savefig(f"confusion_matrix_{i+1}.jpg")
 
-#Well, let's build the frequence distribution
-#It calculates the frequence distribution for a single nodes
-def distribution(word_vec):
-    total_count = len(word_vec)
-    freq_counter = Counter(word_vec)
-    probabilities = {num: freq / total_count for num, freq in freq_counter.items()}
-    #ploting the distribution
-    x = probabilities.keys()
-    y = probabilities.values()
-    return x, y
-
-def building_net(A):
-    return nx.from_numpy_array(A)
-
-def infer_p_edges(G):
-    n = G.number_of_nodes()
-    E = G.number_of_edges()
-    p = (2 * E) / (n * (n - 1))  # Probabilidade de ligação
-    return p
-
-def build_train_test_set(graph_size, graph_models, max_i_graph, max_graph_train, max_j_tep, max_j_tep_train, dt=.1):
-    train = []
-    test = []
-
-    for graph_model in graph_models:
-        for i_graph in tqdm(range(1, max_i_graph + 1)):
-            for j_tep in range(1, max_j_tep + 1):
-                exact_tep = SIS_TEP(graph_model, graph_size, i_graph, j_tep)
-                M = exact_tep.load_or_generate_mutual_info(dt)
-                if j_tep <= max_j_tep_train and i_graph <= max_graph_train:
-                    train.append((M, exact_tep.load_graph()))
-                else:
-                    test.append((M, exact_tep.load_graph()))
-    return train, test
-
-'''In this code, we do this procedure for only one TEP. But we can generalize it
-put a 'for' loop over all TEPs file in directory below
-'''
-import os
-graph_models = [
-    "er", "ba", "ws", "geo", "euc", "sf", "reg", "grid",
-    "ermd", "bamd", "wsmd", "geomd", "eucmd", "sfmd", "regmd", "gridmd"
-] # choose from er, ba, ws, geo, euc, sf, reg, grid [+ "md"]
-graph_size = 100 # choose from 100, 250, 500, 1000
-i_graph = 1 # choose from 1, .., 50
-j_tep = 1 # choose from 1, .., 100,
-dt =.1
-
-train, test = build_train_test_set(graph_size, graph_models, 50, 40, 100, 80, dt)
-
-exact_tep = SIS_TEP(graph_models[0], graph_size, i_graph, j_tep)
-M_train = exact_tep.sample(0.1)
-M_test = exact_tep.sample(1.)
-
-z = exact_tep.load_graph()
+    overall_accuracy = np.mean(accuracies)
+    print(f"\nAverage accuracy of test set: {overall_accuracy:.2%}")
