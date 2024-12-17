@@ -1,3 +1,4 @@
+#%%
 import os
 import numpy as np
 import pandas as pd
@@ -7,16 +8,36 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
+import math
 
 # Path to save the model weights
 model_path = "mlp_weights.pth"
 
 # Load the train and test dataset
-train_data = pd.read_csv('train_dataset.csv', header=None).values  # M x N
-train_labels = pd.read_csv('train_labels.csv', header=None).values  # M x N
+train_data = pd.read_csv('/home/DATA/datasets/TEP/MLP/train_dataset.csv', nrows=10, header=None).values  # M x N
+train_labels = pd.read_csv('/home/DATA/datasets/TEP/MLP/train_labels.csv', nrows=10, header=None).values  # M x N
 
-test_data = pd.read_csv('test_dataset.csv', header=None).values  # c x N
-test_labels = pd.read_csv('test_labels.csv', header=None).values  # c x N
+test_data = pd.read_csv('/home/DATA/datasets/TEP/MLP/test_dataset.csv', nrows=10, header=None).values  # c x N
+test_labels = pd.read_csv('/home/DATA/datasets/TEP/MLP/test_labels.csv', nrows=10, header=None).values  # c x N
+
+squared_dim = int(math.sqrt(train_data.shape[1]))
+pair_indices = torch.triu_indices(squared_dim, squared_dim, offset=1)
+train_sample = torch.tensor(train_data[0].reshape(squared_dim, squared_dim))
+train_sample = torch.vstack([torch.cat((train_sample[:,i], train_sample[:,j]))
+                   for i, j in zip(pair_indices[0], pair_indices[1])])
+
+train_label = train_labels[0].reshape(squared_dim, squared_dim)
+train_label = torch.tensor([train_label[i,j]
+    for i, j in zip(pair_indices[0], pair_indices[1])
+])
+
+test_sample = torch.tensor(test_data[0].reshape(squared_dim, squared_dim))
+test_sample = torch.vstack([torch.cat((test_sample[:,i], test_sample[:,j]))
+                   for i, j in zip(pair_indices[0], pair_indices[1])])
+test_label = test_labels[0].reshape(squared_dim, squared_dim)
+test_label = torch.tensor([test_label[i,j]
+    for i, j in zip(pair_indices[0], pair_indices[1])
+])
 
 # Dataset
 class CustomDataset(Dataset):
@@ -31,8 +52,9 @@ class CustomDataset(Dataset):
         return self.data[idx], self.labels[idx]
 
 # make the dataloader
-train_dataset = CustomDataset(train_data, train_labels)
-test_dataset = CustomDataset(test_data, test_labels)
+train_dataset = CustomDataset(train_sample, train_label)
+test_dataset = CustomDataset(test_sample, test_label)
+
 
 batch_size = 32
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -53,9 +75,9 @@ class MLP(nn.Module):
         return self.model(x)
 
 # Model Settings
-input_size = train_data.shape[1]  # size N
-hidden_size = 4096
-output_size = train_labels.shape[1]  # Size N too
+input_size = train_sample.shape[1]  # size 2*N
+hidden_size = 512
+output_size = 1  # output 1
 
 model = MLP(input_size, hidden_size, output_size)
 criterion = nn.BCELoss()  # Binary Cross-Entropy
@@ -78,7 +100,7 @@ else:
         epoch_loss = 0
         for inputs, targets in train_loader:
             optimizer.zero_grad()
-            outputs = model(inputs)
+            outputs = model(inputs).squeeze()
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
@@ -123,3 +145,4 @@ with torch.no_grad():
 
     overall_accuracy = np.mean(accuracies)
     print(f"\nAverage accuracy of test set: {overall_accuracy:.2%}")
+# %%
