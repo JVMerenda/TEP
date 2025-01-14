@@ -80,17 +80,17 @@ end
 
 Train a combined ELM model on the matrices of connections `connection_matrices` with target `Y` and `n_hidden` hidden units.
 """
-function COMBO_ELM(connection_matrices::Dict{String, <:Matrix{T}}, Y::Matrix{T}, n_hidden) where T <: Real
+function COMBO_ELM(connection_matrices::Dict{String, <:Matrix{T}}, Y::Matrix{T}, n_hidden_connection, n_hidden_combo) where T <: Real
     elms = Dict{String, ELM{T}}()
     Ys = Matrix{Float64}[]
     for (name, X) in connection_matrices
-        elm = ELM(X, Y, n_hidden)
+        elm = ELM(X, Y, n_hidden_connection)
         elms[name] = elm
         push!(Ys, elm(X))
     end
     X_comb = input_to_combination(Ys)
     Y_comb = Y'[:]
-    comb_elm = ELM(X_comb, Y_comb, n_hidden)
+    comb_elm = ELM(X_comb, Y_comb, n_hidden_combo)
     return COMBO_ELM(elms, comb_elm)
 end
 
@@ -114,10 +114,10 @@ Vectorize the upper triangular part of a matrix.
 """
 function vectorize_upper_triangle(mat::AbstractMatrix)
     n = size(mat, 1)
-    v = zeros(Int(n*(n-1)//2))
+    v = zeros(Int((n*(n+1)//2)))
     c_row = 1
     for i in 1:n
-        for j in i+1:n
+        for j in i:n
             v[c_row] = mat[i, j]
             c_row += 1
         end
@@ -131,11 +131,11 @@ end
 Transform a vectorized upper triangular part of a matrix into a symmetric matrix with zero diagonal.
 """
 function vector_to_adjacency(vec::AbstractVector)
-    n = Int(sqrt(2*length(vec) + 0.25) - 0.5)
+    n = Int((sqrt(1 + 8 * length(vec)) - 1) / 2)
     mat = zeros(Float64, n, n)
     c_row = 1
     for i in 1:n
-        for j in i+1:n
+        for j in i:n
             mat[i, j] = vec[c_row]
             mat[j, i] = vec[c_row]
             c_row += 1
@@ -151,7 +151,7 @@ Build a matrix of features of the upper triagular part from a vector of matrices
 """
 function build_X_mats(mats::Vector{<: Matrix{<: Real}})
     n_vertices = size(mats[1], 1)
-    n_features = Int(n_vertices * (n_vertices - 1) // 2)
+    n_features = Int((n_vertices * (n_vertices - 1) // 2) + n_vertices)
     n_samples = length(mats)
     X = Matrix{Float64}(undef, n_samples, n_features)
 
@@ -220,6 +220,8 @@ end
 connections = Dict([
     "mim1" => x -> mutual_information_matrix(x; word_length=1),
     "mim3" => x -> mutual_information_matrix(x; word_length=3),
+    "mim3sq" => x -> mutual_information_matrix(x; word_length=3).^2,
+    "mim3cu" => x -> mutual_information_matrix(x; word_length=3).^3,
     "mim5" => x -> mutual_information_matrix(x; word_length=5),
     "pc1" => x -> correlation_matrix(x; word_length=1),
 #    "pc3" => x -> correlation_matrix(x; word_length=3),
@@ -228,13 +230,16 @@ connections = Dict([
     "ic" => x -> infection_count_matrix(x)
 ])
 
-teps, gs = load_teps(100, ["er"], 1:25, 1:20, 0.25)
+teps, gs = load_teps(25, ["er"], 1:40, 1:25, 0.1)
 
 train_teps, train_gs, test_teps, test_gs = vec.(split_test_train(teps, gs))
 
 Y = build_X_mats(train_gs)
 X_train = build_connections(train_teps, connections)
-c_elm = COMBO_ELM(X_train, Y, 500)
+c_elm = COMBO_ELM(X_train, Y, 500, 10)
+sqrt(mean((c_elm(X_train) - Y).^2))
+sqrt(mean(((c_elm(X_train) .> .5) - Y).^2))
+
 c_elm(X_train)
 
 Y_ref = build_X_mats(test_gs)
@@ -243,8 +248,10 @@ X_test = build_connections(test_teps, connections)
 Y_pred = c_elm(X_test)
 
 sqrt(mean((Y_pred .- Y_ref).^2))
+sqrt(mean(((Y_pred .> .9) .- Y_ref).^2))
+mean((Y_pred .> 1.) .== Y_ref)
 
-As = [vector_to_adjacency(r) for r in eachrow(Y_pred .> .22)]
+As = [vector_to_adjacency(r) for r in eachrow(Y_pred .> .9)]
 mean.(As)
 Y_ref
 Y_pred

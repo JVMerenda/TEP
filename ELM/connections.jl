@@ -17,7 +17,7 @@ function mutual_information_matrix(tep; word_length=1)
     word_vectors = [create_words(row, word_length) for row in eachrow(tep)]
     est = JointProbabilities(MIShannon(), UniqueElements())
     for i in 1:n_vertices
-        for j in i+1:n_vertices
+        for j in i:n_vertices
             mutual_info[i,j] = association(est, word_vectors[i], word_vectors[j])
             mutual_info[j,i] = mutual_info[i,j]
         end
@@ -30,7 +30,7 @@ function correlation_matrix(tep; word_length=1, cor=PearsonCorrelation)
     correlation = zeros(Float64, n_vertices, n_vertices)
     word_vectors = [create_words(row, word_length) for row in eachrow(tep)]
     for i in 1:n_vertices
-        for j in i+1:n_vertices
+        for j in i:n_vertices
             try
                 correlation[i,j] = association(cor(), word_vectors[i], word_vectors[j])
             catch e
