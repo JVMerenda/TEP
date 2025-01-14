@@ -11,8 +11,16 @@ mean_degree_distribution = discretize_distribution(Gamma(5 / 1.5, 1.5), 2:12)
 
 parameter_combinations = [
     (N=100, k=mean_degree_distribution),
+    (N=200, k=mean_degree_distribution),
     (N=250, k=mean_degree_distribution),
+    (N=300, k=mean_degree_distribution),
+    (N=400, k=mean_degree_distribution),
     (N=500, k=mean_degree_distribution),
+    (N=600, k=mean_degree_distribution),
+    (N=700, k=mean_degree_distribution),
+    (N=750, k=mean_degree_distribution),
+    (N=800, k=mean_degree_distribution),
+    (N=900, k=mean_degree_distribution),
     (N=1000, k=mean_degree_distribution),
 ]
 
