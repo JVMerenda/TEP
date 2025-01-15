@@ -1,6 +1,8 @@
 *.npz
 gillespie_SIS/networks
 .vscode
+*jpg
+*.csv
 
 # Created by https://www.toptal.com/developers/gitignore/api/latex
 # Edit at https://www.toptal.com/developers/gitignore?templates=latex
