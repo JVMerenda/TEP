@@ -39,10 +39,6 @@ function parse_command_line_args()
         arg_type = Vector{Float64}
         default = Vector{Float64}()
 
-        "--plot"
-        help = "Plot the evolution of infectious density"
-        action = :store_true
-
         "--allow-dieout"
         help = "Also store the result if the infection has died out by time `T`"
         action = :store_true
@@ -60,9 +56,40 @@ function parse_command_line_args()
         help = "Initial number of people per vertex in MSIS"
         arg_type = Int64
         default = 30
+
+        "--store-tep"
+        help = "Store the TEP"
+        action = :store_true
+
+        "--store-mutual-info"
+        help = "Store the mutual information"
+        action = :store_true
+
+        "--plot"
+        help = "Plot the evolution of infectious density"
+        action = :store_true
+
+        "--mutual-info-word-length"
+        help = "Word length for mutual information calculation"
+        arg_type = Int64
+        default = 5
+
+        "--mutual-info-dt"
+        help = "Time step for sampling for mutual information calculation"
+        arg_type = Float64
+        default = .1
     end
 
     return parse_args(s)
+end
+
+function vectorize_upper_triangular(mat::AbstractMatrix; include_diagonal=false)
+    n = size(mat, 1)
+    if include_diagonal
+        return [mat[i, j] for i in 1:n for j in i:n]
+    else
+        return [mat[i, j] for i in 1:n for j in i+1:n]
+    end
 end
 
 function read_graph(f::AbstractString)
@@ -154,4 +181,18 @@ function build_graphs(g_model, N_graphs, parameter_combinations, general_dir, g_
             end
         end
     end
+end
+
+"""
+    mutual_info_from_tep(tepname, mutual_info_word_length, dt)
+
+Calculate the mutual information matrix from a TEP file.
+"""
+function mutual_info_from_tep(tepname, mutual_info_word_length, dt)
+    _, type, g_id, t_id = split(tepname, "-")
+    t_id = split(t_id, ".")[1]
+    location = TEPLocation(".", type, g_id, t_id)
+    tep = load_tep(location)
+    sampled = sample_with_dt(tep, dt)
+    return mutual_information_matrix(sampled; word_length=mutual_info_word_length)
 end

@@ -81,7 +81,7 @@ Convert the solution `sol` to a sampled tep in the form of a matrix.
 Each column corresponds to a time point and each row corresponds to a vertex.
 """
 function to_tep(sol::ODESolution, dt::Real)
-    return hcat([sol(t) for t in 0:dt:sol.t[end]]...)
+    return hcat([sol(t) for t in 0:dt:sol.t[end]]...)'
 end
 
 function plot_density(sol::ODESolution, ts, graph, g_name, j)

@@ -130,18 +130,18 @@ with torch.no_grad():
     for i, (inputs, targets) in enumerate(test_loader):
         outputs = model(inputs).round()  # Binary output (0 or 1)
         correct = (outputs == targets).sum(dim=1).item()
-        accuracy = correct / targets.size(1)  # Accuracy
+        accuracy = correct / targets.size(0)  # Accuracy
         accuracies.append(accuracy)
-        print(f"Test {i+1}: Accuracy = {accuracy:.2%}")
+        # print(f"Test {i+1}: Accuracy = {accuracy:.2%}")
         
         # Confusion matrices
         targets_flat = targets.numpy().flatten()
         outputs_flat = outputs.numpy().flatten()
-        cm = confusion_matrix(targets_flat, outputs_flat, labels=[0, 1])
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
-        disp.plot(cmap="Blues", values_format="d")
-        plt.title(f"Confusion matrix {i+1}")
-        plt.savefig(f"confusion_matrix_{i+1}.jpg")
+        # cm = confusion_matrix(targets_flat, outputs_flat, labels=[0, 1])
+        # disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
+        # disp.plot(cmap="Blues", values_format="d")
+        # plt.title(f"Confusion matrix {i+1}")
+        # plt.savefig(f"confusion_matrix_{i+1}.jpg")
 
     overall_accuracy = np.mean(accuracies)
     print(f"\nAverage accuracy of test set: {overall_accuracy:.2%}")
