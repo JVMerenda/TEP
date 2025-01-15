@@ -45,6 +45,10 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 - `--dt` Sampling steps as an array (e.g. [.1,1.,10.]; if nothing is given, the exact tep is returned
 - `--plot` Flag to plot the evolution of infectious density (recommend to use with only one thread)
 - `--allow-dieout` Flag to also store the result if the infection has died out by time `T`
+- `--store-tep` Flag to store the TEP
+- `--store-mutual-info` Flag to store the mutual information
+- `--mutual-info-word-length` Word length for the mutual information calculation (default 5)
+- `--mutual-info-dt` Time step for the mutual information calculation (default .1)
 
 ### Stores in the output directory
 - `er-\$i.npz` Adjacency matrix of the generated graph
