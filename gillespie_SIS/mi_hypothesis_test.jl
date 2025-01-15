@@ -13,7 +13,7 @@ N_teps = 100
 p_val = 0.05
 
 result_dir = joinpath(@__DIR__, "results", "sis")
-graph_models = readdir(result_dir)
+graph_models = setdiff(readdir(result_dir), "real")
 
 const FULL_TO_ABRV = Dict(
     "erdos-renyi" => "er",
@@ -89,6 +89,6 @@ for graph_model in graph_models
         end
         N_graphs_w_one += any_true
     end
-    @info "For $(graph_model) $(N_total_true) / $(N_graphs*N_teps) permutation tests could be rejected. For $(N_graphs_w_one) / $(N_graphs) at least for one mutual information matrix the test could be rejected."
+    println("For $(graph_model) $(N_total_true) / $(N_graphs*N_teps) permutation tests could be rejected. For $(N_graphs_w_one) / $(N_graphs) at least for one mutual information matrix the test could be rejected.")
 end
 
