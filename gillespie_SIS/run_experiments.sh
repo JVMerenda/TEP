@@ -16,6 +16,8 @@ N_THREADS=6
 N_GRAPHS=50
 N_TEPS=100
 
+OUTPUT_DIR="results"
+
 GRAPH_TYPES=("erdos-renyi" "regular" "barabasi-albert" "scale-free" "watts-strogatz" "euclidean" "geometric" "erdos-renyi-multi-degree" "regular-multi-degree" "barabasi-albert-multi-degree" "scale-free-multi-degree" "watts-strogatz-multi-degree" "euclidean-multi-degree" "grid-multi-degree" "geometric" "geometric-multi-degree") # real excluded, since they are handled differently
 
 NODE_COUNTS=(100 200 250 300 400 500 600 700 750 800 900 1000)
@@ -36,11 +38,11 @@ for n in "${NODE_COUNTS[@]}"; do
     for graph in "${GRAPH_TYPES[@]}"; do
         echo ""
         echo "Running experiments for ${graph} (size ${n})"
-        julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input "results/graphs/${graph}/N${n}/" --N_teps "$N_TEPS" --output "results/${DYN_DIR}/${graph}/N${n}/" --store-mutual-info $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
+        julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input "results/graphs/${graph}/N${n}/" --N_teps "$N_TEPS" --output "${OUTPUT_DIR}/${DYN_DIR}/${graph}/N${n}/" --store-mutual-info $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
     done
 done
 
 echo ""
 echo "Running experiments for real networks"
-julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input results/graphs/real/infect-hyper --N_teps "$N_TEPS" --output results/${DYN_DIR}/real/infect-hyper $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
-julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input results/graphs/real/sociopatterns --N_teps "$N_TEPS" --output results/${DYN_DIR}/real/sociopatterns $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
+julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input results/graphs/real/infect-hyper --N_teps "$N_TEPS" --output "${OUTPUT_DIR}/${DYN_DIR}/real/infect-hyper" $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
+julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input results/graphs/real/sociopatterns --N_teps "$N_TEPS" --output "${OUTPUT_DIR}/${DYN_DIR}/real/sociopatterns" $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
