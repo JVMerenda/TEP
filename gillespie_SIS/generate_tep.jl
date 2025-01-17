@@ -77,20 +77,20 @@ function main(
 
         N = nv(graph)
         start_point = 1
-        mutual_info = isfile(mutual_info_name) ? readdlm(mutual_info_name, ',') : Matrix{Float64}(undef, Int(N*(N+1)//2), N_teps)
+        mutual_info = isfile(mutual_info_name) ? readdlm(mutual_info_name, ',') : Matrix{Float64}(undef, N_teps, Int(N*(N+1)//2))
         labels = isfile(label_name) ? readdlm(label_name, ',') : Matrix(vectorize_upper_triangular(adjacency_matrix(graph))')
         if isfile(label_name)
             @assert labels == Matrix(vectorize_upper_triangular(adjacency_matrix(graph))') "Inconsistent graph detected: $(g_name)"
         end
         if isfile(mutual_info_name)
-            if size(mutual_info, 2) == N_teps
+            if size(mutual_info, 1) == N_teps
                 @info "Skipping $(g_name), since it exists with the correct dimension"
                 continue
             else
                 mutual_info_old = mutual_info
-                mutual_info = Matrix{Float64}(undef, Int(N*(N+1)//2), N_teps)
-                mutual_info[:, 1:size(mutual_info_old, 2)] .= mutual_info_old
-                start_point = size(mutual_info_old, 2) + 1
+                mutual_info = Matrix{Float64}(undef, N_teps, Int(N*(N+1)//2))
+                mutual_info[1:size(mutual_info_old, 1), :] .= mutual_info_old
+                start_point = size(mutual_info_old, 1) + 1
             end
         end
 
@@ -104,7 +104,7 @@ function main(
             if (!new_graph || store_mutual_info) && all(tepname -> isfile(tepname), tepnames)
                 if store_mutual_info
                     tep_mutual_info =  mutual_info_from_tep(tepnames[1], mutual_info_word_length, mutual_info_dt)
-                    mutual_info[:, j] .= vectorize_upper_triangular(tep_mutual_info; include_diagonal=true)
+                    mutual_info[j,:] .= vectorize_upper_triangular(tep_mutual_info; include_diagonal=true)
                 else
                     @info "Skipping $(g_name)-$(tep_pad(j)), since it exists"
                 end
@@ -119,7 +119,7 @@ function main(
 
             if store_mutual_info
                 tep_mutual_info =  mutual_information_matrix(Dynamic.to_tep(sol, mutual_info_dt); word_length=mutual_info_word_length)
-                mutual_info[:, j] .= vectorize_upper_triangular(tep_mutual_info; include_diagonal=true)
+                mutual_info[j,:] .= vectorize_upper_triangular(tep_mutual_info; include_diagonal=true)
             end
 
             # Result storage

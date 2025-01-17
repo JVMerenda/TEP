@@ -51,8 +51,8 @@ minimum(malawi.id1)
 
 tep, g = to_tep_and_graph(malawi)
 mutual_info = mutual_information_matrix(tep; word_length=5)
-store_mutual_info("malawi", mutual_info)
-store_graph("malawi", g)
+store_mutual_info("full", mutual_info)
+store_graph("full", g)
 
 seconds_per_day = 60 * 60 * 24
 teps_per_day, gs_per_day = per_period(malawi, seconds_per_day)
