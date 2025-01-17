@@ -71,7 +71,8 @@ function main(
 
     for (g_name, graph) in graphs
         jset, vtj, jtv = Dynamic.generate_jump_sets(graph)
-        new_graph = copy_graph(graph, joinpath(pwd(), "$(g_name).npz")) # store copy of the graph with th results
+        new_graph = store_tep ? # store copy of the graph with th results, if the teps are stored
+            copy_graph(graph, joinpath(pwd(), "$(g_name).npz")) : true
         mutual_info_name = "$(g_name)_dataset.csv"
         label_name = "$(g_name)_labels.csv"
 
