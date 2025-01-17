@@ -96,8 +96,9 @@ julia --project results/graphs/watts-strogatz/build_graphs.jl 50
 
 The following real-life graphs are available as well.
 
-1. [Infect-Hyper](https://networkrepository.com/infect-hyper.php) 113 nodes w 2196 edges of human close proximity network.
-2. [Infectious SocioPatterns dynamic contact networks](http://www.sociopatterns.org/datasets/infectious-sociopatterns-dynamic-contact-networks/) Collection of daily interactions within a museum. The daily graphs that result in a fully connected network are included. This results in:
+1. [Malawi](http://www.sociopatterns.org/datasets/contact-patterns-in-a-village-in-rural-malawi/) Contact data in a Malawi village with 86 people.
+2. [Infect-Hyper](https://networkrepository.com/infect-hyper.php) 113 nodes w 2196 edges of human close proximity network.
+3. [Infectious SocioPatterns dynamic contact networks](http://www.sociopatterns.org/datasets/infectious-sociopatterns-dynamic-contact-networks/) Collection of daily interactions within a museum. The daily graphs that result in a fully connected network are included. This results in:
     * 2009_05_03.npz: 305 nodes, 1847 edges
     * 2009_05_06.npz: 176 nodes, 745 edges
     * 2009_05_07.npz: 194 nodes, 801 edges
