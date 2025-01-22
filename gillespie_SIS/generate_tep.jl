@@ -84,7 +84,7 @@ function main(
             @assert labels == Matrix(vectorize_upper_triangular(adjacency_matrix(graph))') "Inconsistent graph detected: $(g_name)"
         end
         if isfile(mutual_info_name)
-            if size(mutual_info, 1) == N_teps
+            if size(mutual_info, 1) >= N_teps
                 @info "Skipping $(g_name), since it exists with the correct dimension"
                 continue
             else
