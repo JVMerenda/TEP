@@ -89,7 +89,7 @@ def vector_to_symmetric_matrix(v, include_diagonal=True, dtype=torch.float32):
     return mat
 
 
-def handle_dataset(prefix):
+def handle_dataset(prefix, dtype=torch.float32):
     """
     Load a dataset (mutual information matrix) and its corresponding labels (adjacency matrix),
     and process them into a format suitable for training.
@@ -106,29 +106,30 @@ def handle_dataset(prefix):
     samples = []
     targets = []
 
+    graph_name = prefix.split("/")[-1]
     data = pd.read_csv(f'{prefix}_dataset.csv', header=None).values
     labels = pd.read_csv(f'{prefix}_labels.csv', header=None).values
 
-    adjacency_matrix = vector_to_symmetric_matrix(labels[0], include_diagonal=False)
+    adjacency_matrix = vector_to_symmetric_matrix(labels[0], include_diagonal=False, dtype=dtype)
     N = adjacency_matrix.shape[0]
     assert N * (N + 1) == 2 * data.shape[1], "Invalid data and labels dimensions"
 
     pair_indices = torch.triu_indices(N, N, offset=1)
 
-    for sample in tqdm(data, desc="Processing dataset"):
-        sample_tensor = vector_to_symmetric_matrix(sample, include_diagonal=True)
+    for sample in tqdm(data, desc=f"Processing {graph_name}", leave=False):
+        sample_tensor = vector_to_symmetric_matrix(sample, include_diagonal=True, dtype=dtype)
         sample_processed = torch.vstack([torch.cat((sample_tensor[i,:], sample_tensor[j,:]))
                                           for i, j in zip(pair_indices[0], pair_indices[1])])
         
         label_processed = torch.tensor([adjacency_matrix[i, j] for i, j in zip(pair_indices[0], pair_indices[1])],
-                                        dtype=torch.float32)
+                                        dtype=dtype)
         
         samples.append(sample_processed)
         targets.append(label_processed)
 
     return torch.stack(samples), torch.stack(targets)
 
-def handle_multiple_datasets(path, graph_names):
+def handle_multiple_datasets(path, graph_names, dtype=torch.float32):
     """
     Load the mutual information data and adjacency matrix labels for multiple graphs stored in
     the same directory
@@ -136,15 +137,15 @@ def handle_multiple_datasets(path, graph_names):
     samples = []
     targets = []
 
-    for graph_name in tqdm(graph_names, desc="Processing graphs"):
-        g_samples, g_targets = handle_dataset(f'{path}/{graph_name}')
+    for graph_name in tqdm(graph_names, desc="Processing graphs", leave=False):
+        g_samples, g_targets = handle_dataset(f'{path}/{graph_name}', dtype=dtype)
 
         samples.append(g_samples)
         targets.append(g_targets)
 
     return torch.cat(samples), torch.cat(targets)
 
-def handle_sis_graphs(graph_size, graph_models, graph_idxs, nb_digits_g=2, base_dir=BASE_DIR+"sis/"):
+def handle_sis_graphs(graph_size, graph_models, graph_idxs, nb_digits_g=2, base_dir=BASE_DIR+"sis/", dtype=torch.float32):
     """
     Load the mutual information data and adjacency matrix labels for multiple SIS networks
 
@@ -161,8 +162,18 @@ def handle_sis_graphs(graph_size, graph_models, graph_idxs, nb_digits_g=2, base_
     for graph_model in tqdm(graph_models, desc="Processing graph models"):
         graphs = [f"{graph_model}-{graph_idx:0{nb_digits_g}d}" for graph_idx in graph_idxs]
         dir = f"{base_dir}/{abrv_to_full(graph_model)}/N{graph_size}"
-        g_samples, g_targets = handle_multiple_datasets(dir, graphs)
+        g_samples, g_targets = handle_multiple_datasets(dir, graphs, dtype=dtype)
         samples.append(g_samples)
         targets.append(g_targets)
 
     return torch.cat(samples), torch.cat(targets)
+
+if __name__ == "__main__":
+    N = 100
+    models = ["er", "ba", "ws", "euc", "geo", "reg", "sf"]
+    models = models + [f"{model}md" for model in models]
+    models.append("gridmd")
+
+    data, labels = handle_sis_graphs(N, models, range(1, 51))
+    torch.save(data, f'sis_N{N}_data.pt')
+    torch.save(labels, f'sis_N{N}_labels.pt')
