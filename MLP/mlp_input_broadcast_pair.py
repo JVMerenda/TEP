@@ -14,25 +14,54 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 # Path to save the model weights
 model_path = "mlp_weights.pth"
 
+number_of_networks = 100
+sample_number = number_of_networks
+
 # Load the train and test dataset
-train_data = pd.read_csv('/home/DATA/datasets/TEP/MLP/train_dataset.csv', nrows=10, header=None).values  # M x N
-train_labels = pd.read_csv('/home/DATA/datasets/TEP/MLP/train_labels.csv', nrows=10, header=None).values  # M x N
+train_data = pd.read_csv('/home/DATA/datasets/TEP/MLP/train_dataset.csv', nrows=number_of_networks, header=None).values  # M x N
+train_labels = pd.read_csv('/home/DATA/datasets/TEP/MLP/train_labels.csv', nrows=number_of_networks, header=None).values  # M x N
 
-test_data = pd.read_csv('/home/DATA/datasets/TEP/MLP/test_dataset.csv', nrows=10, header=None).values  # c x N
-test_labels = pd.read_csv('/home/DATA/datasets/TEP/MLP/test_labels.csv', nrows=10, header=None).values  # c x N
+test_data = pd.read_csv('/home/DATA/datasets/TEP/MLP/train_dataset.csv', nrows=number_of_networks+1, header=None).values  # c x N
+test_labels = pd.read_csv('/home/DATA/datasets/TEP/MLP/train_labels.csv', nrows=number_of_networks+1, header=None).values  # c x N
 
-sample_number = 1
-
+#%%
+train_samples = torch.empty(0)
+train_targets = torch.empty(0)
 squared_dim = int(math.sqrt(train_data.shape[1]))
 pair_indices = torch.triu_indices(squared_dim, squared_dim, offset=1)
-train_sample = torch.tensor(train_data[sample_number].reshape(squared_dim, squared_dim))
-train_sample = torch.vstack([torch.cat((train_sample[:,i], train_sample[:,j]))
-                   for i, j in zip(pair_indices[0], pair_indices[1])])
 
-train_label = train_labels[sample_number].reshape(squared_dim, squared_dim)
-train_label = torch.tensor([train_label[i,j]
-    for i, j in zip(pair_indices[0], pair_indices[1])
-])
+for n in range(number_of_networks):
+    train_sample = torch.tensor(train_data[n].reshape(squared_dim, squared_dim))
+    train_sample = torch.vstack([torch.cat((train_sample[:,i], train_sample[:,j]))
+                    for i, j in zip(pair_indices[0], pair_indices[1])])
+    train_samples = torch.cat((train_samples, train_sample))    
+
+    train_target = train_labels[n].reshape(squared_dim, squared_dim)
+    train_target = torch.tensor([train_target[i,j]
+                                for i, j in zip(pair_indices[0], pair_indices[1])
+                            ])
+    train_targets = torch.cat((train_targets, train_target))
+
+# Balance the dataset
+positive_indices = (train_targets == 1).nonzero(as_tuple=True)[0]
+negative_indices = (train_targets == 0).nonzero(as_tuple=True)[0]
+
+# Determine the number of samples to match the minority class
+num_positive = len(positive_indices)
+num_negative = len(negative_indices)
+num_samples = min(num_positive, num_negative)
+
+# Randomly sample from the majority class to balance the dataset
+balanced_positive_indices = positive_indices[torch.randperm(num_positive)[:num_samples]]
+balanced_negative_indices = negative_indices[torch.randperm(num_negative)[:num_samples]]
+
+# Combine the indices and shuffle them
+balanced_indices = torch.cat((balanced_positive_indices, balanced_negative_indices))
+balanced_indices = balanced_indices[torch.randperm(len(balanced_indices))]
+
+# Select the balanced samples and targets
+train_samples = train_samples[balanced_indices]
+train_targets = train_targets[balanced_indices]
 
 test_sample = torch.tensor(test_data[sample_number].reshape(squared_dim, squared_dim))
 test_sample = torch.vstack([torch.cat((test_sample[:,i], test_sample[:,j]))
@@ -42,6 +71,7 @@ test_label = torch.tensor([test_label[i,j]
     for i, j in zip(pair_indices[0], pair_indices[1])
 ])
 
+    
 # Dataset
 class CustomDataset(Dataset):
     def __init__(self, data, labels):
@@ -55,14 +85,15 @@ class CustomDataset(Dataset):
         return self.data[idx], self.labels[idx]
 
 # make the dataloader
-train_dataset = CustomDataset(train_sample, train_label)
+train_dataset = CustomDataset(train_samples, train_targets)
 test_dataset = CustomDataset(test_sample, test_label)
 
 
-batch_size = 32
+batch_size = 8192
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
+# MLP architecture
 # MLP architecture
 class MLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, device):
@@ -73,11 +104,19 @@ class MLP(nn.Module):
             nn.BatchNorm1d(hidden_size),  # Add Batch Normalization
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(hidden_size, hidden_size),
-            nn.BatchNorm1d(hidden_size),  # Add Batch Normalization
+            nn.Linear(hidden_size, hidden_size // 4),
+            nn.BatchNorm1d(hidden_size // 4),  # Add Batch Normalization
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(hidden_size, output_size),
+            nn.Linear(hidden_size // 4, hidden_size // 8),
+            nn.BatchNorm1d(hidden_size // 8),  # Add Batch Normalization
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_size // 8, hidden_size // 32),
+            nn.BatchNorm1d(hidden_size // 32),  # Add Batch Normalization
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_size // 32, output_size),
             nn.Sigmoid()  # Binary output
         ).to(device)
     
@@ -87,18 +126,15 @@ class MLP(nn.Module):
 
 
 # Model Settings
-input_size = train_sample.shape[1]  # size 2*N
-hidden_size = 512
+input_size = train_samples.shape[1]  # size 2*N
+hidden_size = 4096
 output_size = 1  # output 1
-
-number_connected = (test_label == 1).sum()
-number_disconnected = (test_label == 0).sum()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model = MLP(input_size, hidden_size, output_size, device).to(device)
-criterion = nn.BCELoss()  # Binary Cross-Entropy
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-num_epochs = 200
+criterion = nn.BCEWithLogitsLoss()  # Binary Cross-Entropy
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
+num_epochs = 1000
 scheduler = CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=0)
 
 # Inicializar lista para salvar erros por época
