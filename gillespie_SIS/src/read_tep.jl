@@ -13,6 +13,8 @@ struct TEP
     max_T::Float64
 end
 
+const ROOT = joinpath(@__DIR__, "..", "results", "sis")
+
 const ABRV_TO_FULL = Dict(
     "er" => "erdos-renyi",
     "ba" => "barabasi-albert",
@@ -56,9 +58,8 @@ Load the TEP with the given parameters.
 - `nb_digits_tep::Int=3`: The number of digits in the TEP index.
 """
 function TEP(abrv::String, nb_vertices::Int, i_graph::Int, j_tep::Int;
-               nb_digits_g::Int=2, nb_digits_tep::Int=3)::TEP
-    root = @sprintf("%s/%s/N%d", "/home/tim/Documents/overleaf/TEP/gillespie_SIS/results/sis",
-                   abrv_to_full(abrv), nb_vertices)
+               nb_digits_g::Int=2, nb_digits_tep::Int=3, root=ROOT)::TEP
+    root = @sprintf("%s/%s/N%d", root, abrv_to_full(abrv), nb_vertices)
     network_type = abrv
     graph_id = @sprintf("%0*d", nb_digits_g, i_graph)
     tep_id = @sprintf("%0*d", nb_digits_tep, j_tep)
