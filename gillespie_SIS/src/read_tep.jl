@@ -28,7 +28,7 @@ const ABRV_TO_FULL = Dict(
 
 function abrv_to_full(abrv::String)::String
     if endswith(abrv, "md")
-        return ABRV_TO_FULL[substring(abrv, 1, end-2)] * "-multi-degree"
+        return ABRV_TO_FULL[abrv[1:end-2]] * "-multi-degree"
     else
         return ABRV_TO_FULL[abrv]
     end

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # For msis
-# DYN_DIR="msis"
-# LAMBDA=0.3
-# MSIS_FLAG="--use-msis"
-# DT_FLAG="--dt 0.1"
+DYN_DIR="msis"
+LAMBDA=0.3
+MSIS_FLAG="--use-msis"
+MI_WORD_FLAG="--mutual-info-word-length 1"
 
 # For sis
 # DYN_DIR="sis"
