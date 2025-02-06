@@ -1,20 +1,21 @@
 #!/bin/bash
 
 # For msis
-# DYN_DIR="msis"
-# LAMBDA=0.3
-# MSIS_FLAG="--use-msis"
-# DT_FLAG="--dt 0.1"
+DYN_DIR="msis"
+LAMBDA=0.3
+MSIS_FLAG="--use-msis"
+MI_WORD_FLAG="--mutual-info-word-length 1"
 
 # For sis
-DYN_DIR="sis"
-LAMBDA=0.03
-MSIS_FLAG=""
-DT_FLAG=""
+# DYN_DIR="sis"
+# LAMBDA=0.03
+# MSIS_FLAG=""
+#MI_WORD_FLAG=""
 
-N_THREADS=6
+N_THREADS=4
 N_GRAPHS=50
 N_TEPS=10
+DT_FLAG="--dt 0.1"
 
 OUTPUT_DIR="results"
 
@@ -38,7 +39,7 @@ for n in "${NODE_COUNTS[@]}"; do
     for graph in "${GRAPH_TYPES[@]}"; do
         echo ""
         echo "Running experiments for ${graph} (size ${n})"
-        julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input "results/graphs/${graph}/N${n}/" --N_teps "$N_TEPS" --output "${OUTPUT_DIR}/${DYN_DIR}/${graph}/N${n}/" --store-mutual-info $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
+        julia --project -t "$N_THREADS" generate_tep.jl --lambda "$LAMBDA" --input "results/graphs/${graph}/N${n}/" --N_teps "$N_TEPS" --output "${OUTPUT_DIR}/${DYN_DIR}/${graph}/N${n}/" --store-mutual-info --store-tep $(echo "${MI_WORD_FLAG}") $(echo "${MSIS_FLAG}") $(echo "${DT_FLAG}")
     done
 done
 
