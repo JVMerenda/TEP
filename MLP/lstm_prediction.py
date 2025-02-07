@@ -33,8 +33,7 @@ train_dataset = dataset.create_full_dataset_with_scaling(
     file_paths=train_files,
     scaler=scaler,
     train=True,
-    window_size=10,
-    stride=10
+    chunk_size=25
 )
 
 # Build dataset for testing
@@ -42,21 +41,20 @@ test_dataset = dataset.create_full_dataset_with_scaling(
     file_paths=test_files,
     scaler=scaler,  # same scaler
     train=False,
-    window_size=10,
-    stride=10
+    chunk_size=25
 )
 
 
 # 2) Create DataLoaders
-batch_size = 256
+batch_size = 1024
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 # 3) Instantiate model
-model = models.PairLSTMClassifier(lstm_hidden_dim=512, mlp_hidden_dim=256).to(device)
+model = models.PairLSTMClassifier(lstm_hidden_dim=64, mlp_hidden_dim=256).to(device)
 #%%
 # 4) Loss and optimizer
-criterion = nn.BCELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+criterion = nn.BCEWithLogitsLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
 models.train_with_logging_and_cm(model, train_dataset, test_dataset, criterion, optimizer, num_epochs=100, batch_size=batch_size, device=device)
 # %%

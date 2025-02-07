@@ -129,7 +129,8 @@ def create_full_dataset_with_scaling(
     scaler,
     train=True,
     window_size=10,
-    stride=10
+    stride=10,
+    chunk_size=100
 ):
     """
     Similar to your existing create_full_dataset, but we:
@@ -151,7 +152,7 @@ def create_full_dataset_with_scaling(
             tep_raw = data[f"arr_{k}"]  # e.g., shape (1000, 100)
             
             # (Optional) downsample 
-            tep_down = downsample_binary_series(tep_raw, chunk_size=100)  # => (10, 100)
+            tep_down = downsample_binary_series(tep_raw, chunk_size=chunk_size)  # => (10, 100)
             
             # Transform the shape to (samples=10, features=100) for scaling
             # We apply 'scaler.transform'
@@ -161,8 +162,8 @@ def create_full_dataset_with_scaling(
             ds = PairwiseSlidingDataset(
                 tep_scaled,
                 adjacency_matrix,
-                window_size=window_size,
-                stride=stride
+                window_size=tep_raw.shape[0]//chunk_size,
+                stride=tep_raw.shape[0]//chunk_size
             )
             datasets.append(ds)
     

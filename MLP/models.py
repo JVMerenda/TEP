@@ -17,7 +17,7 @@ class PairLSTMClassifier(nn.Module):
         self.lstm = nn.LSTM(
             input_size=2,
             hidden_size=lstm_hidden_dim,
-            num_layers=4,
+            num_layers=2,
             batch_first=True,
             bidirectional=True
         )
@@ -27,8 +27,7 @@ class PairLSTMClassifier(nn.Module):
             nn.BatchNorm1d(lstm_hidden_dim*2),
             nn.Linear(lstm_hidden_dim*2, mlp_hidden_dim),
             nn.ReLU(),
-            nn.Linear(mlp_hidden_dim, 1),
-            nn.Sigmoid()
+            nn.Linear(mlp_hidden_dim, 1)
         )
     
     def forward(self, x):
@@ -103,7 +102,7 @@ def train_with_logging(model, train_loader, test_loader, criterion, optimizer, n
         with torch.no_grad():
             for X_batch, y_batch in test_loader:
                 y_pred = model(X_batch)
-                predicted = (y_pred >= 0.5).float()
+                predicted = (torch.sigmoid(y_pred) >= 0.5).float()
                 
                 p = predicted.int()
                 t = y_batch.int()
@@ -190,7 +189,7 @@ def train_with_logging_and_cm(
         with torch.no_grad():
             for X_batch, y_batch in test_loader:
                 y_out = model(X_batch.to(device)).cpu()
-                predicted = (y_out >= 0.5).float()
+                predicted = (torch.sigmoid(y_out) >= 0.5).float()
                 p = predicted.int()
                 t = y_batch.int()
                 tp += torch.logical_and(p == 1, t == 1).sum().item()
