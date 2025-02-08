@@ -1,5 +1,5 @@
 include("tools.jl")
-using Random
+using Random, CUDA
 
 function experiment_patches()
     Random.seed!(1276312)
@@ -23,3 +23,4 @@ function experiment_patches()
     return model,X,d2,Y,d1
 end
 
+model, X, d2, Y, d1 = experiment_patches()

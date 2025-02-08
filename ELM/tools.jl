@@ -112,27 +112,47 @@ function get_entropy(X)
     p = [x[2] for x in countmap(X)] # NOTE: CPU-only implementation; consider modifying for GPU    
     x0 = sum(p)    
     # Compute entropy using the formula -Σ(p * log2(p))
-    return -sum([(x / x0) * log2(x / x0) for x in p])
+    return -sum((x / x0) * log2(x / x0) for x in p)
 end
 
 # Calculate mutual entropy between two variables
-function get_mutual_entropy(X, Y)
+function get_joint_entropy(X, Y)
     # Compute joint probabilities of paired values in (X, Y)
     p = [x[2] for x in countmap(zip(X, Y))]
     x0 = sum(p)
     # Use the formula: H(X) + H(Y) - H(X, Y)
-    return get_entropy(X) + get_entropy(Y) - sum([(x / x0) * log2(x / x0) for x in p])
+    return -sum((x / x0) * log2(x / x0) for x in p)
+end
+
+function get_mutual_information(X, Y)
+    return get_entropy(X) + get_entropy(Y) - get_joint_entropy(X, Y)
+end
+
+function get_mutual_entropy_matrix(X)
+    T, N = size(X) # T: Number of time steps, N: Number of variables
+    M = zeros(Float32, (N, N))
+    Threads.@threads for i in 1:N
+        M[i,i] = get_entropy(X[:, i])
+    end
+
+    Threads.@threads for j = 1:N
+        for i = j+1:N
+            M[i, j] = M[i,i] + M[j,j] - get_joint_entropy(X[:, i], X[:, j])
+            M[j, i] = M[i, j]
+        end
+    end
+    return M
 end
 
 # Generate a mutual entropy matrix from a dataset
-function get_mutual_entropy_matrix(X; delay=0)
+function get_mutual_entropy_matrix(X, delay)
     T, N = size(X) # T: Number of time steps, N: Number of variables    
     # Initialize a matrix to store mutual entropies
     M = zeros(Float32, (N, N))   
     # Calculate mutual entropy for each pair of variables
     Threads.@threads for j = 1:N
         for i = j:N
-            M[i, j] = get_mutual_entropy(X[1+delay:T, i], X[1:T-delay, j])
+            M[i, j] = get_mutual_information(X[1+delay:T, i], X[1:T-delay, j])
             M[j, i] = M[i, j] # Symmetric matrix
         end
     end

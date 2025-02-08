@@ -1,6 +1,8 @@
 include("tools.jl")
 using Flux: train!
 using Random: seed!
+using BSON
+using StatisticalMeasures
 
 # ====================================================================
 # ====================================================================
@@ -36,7 +38,7 @@ function build_mlp(data,val_data;lr=1e-2,epochs=1_000,layers=[1024,512])
 end
 
 
-function experiment_elm(; N = 100 , ntrain = [100,5], ntest=[10,1] ,num_hidden = 2048,steps=1000)
+function experiment_elm(; N = 100 , ntrain = [100,5], ntest=[5,1] ,num_hidden = 2048,steps=1000)
     # if isnothing(seed)
     #     seed = 812753712
     # end
@@ -44,15 +46,19 @@ function experiment_elm(; N = 100 , ntrain = [100,5], ntest=[10,1] ,num_hidden =
     
     data_train = zeros(Float32,prod(ntrain),N*N,2)
     X = (rand(N) .< 0.2)
-    kk = 0 ; A = zeros(Int8,(N,N))   
+    kk = 0 ; A = zeros(Int8,(N,N))
+    
+    @info "Generating train data"
     for k=1:ntrain[1]
         A = gen_adj(N, p = mod(0.5 + 0.1*randn(),1e0))
         for j=1:ntrain[2]
             kk += 1
             data_train[kk,:,2] = vec(A)
-            data_train[kk,:,1] = vec(get_mutual_entropy_matrix(gen_tep(A,X,steps=steps )))
+            data_train[kk,:,1] = vec(get_mutual_entropy_matrix(cpu(gen_tep(A,X,steps=steps ))))
         end
     end
+
+    @info "Generating test data"
     data_test = zeros(Float32,prod(ntest),N*N,2)
     jj = 0 ; B = zeros(Int8,(N,N))   
     for k=1:ntest[1]
@@ -60,17 +66,18 @@ function experiment_elm(; N = 100 , ntrain = [100,5], ntest=[10,1] ,num_hidden =
         for j=1:ntest[2]
             jj += 1
             data_test[jj,:,2] = vec(B)
-            data_test[jj,:,1] = vec(get_mutual_entropy_matrix(gen_tep(B,X )))
+            data_test[jj,:,1] = vec(get_mutual_entropy_matrix(cpu(gen_tep(B,X ))))
         end
     end 
-        
-    model = ELM(data_train[:,:,1],data_train[:,:,2],num_hidden=num_hidden)
-    u = now()
-    BSON.@save "exp-elm-$num_hidden-$u.bson" model data_train data_test
-
-    avg_train = mean([count((model(data_train[k,:,1]') .> 0.5) .== data_train[k,:,2]') for k=1:prod(ntrain)])
-    avg_test  = mean([count((model(data_test[k,:,1]') .> 0.5) .== data_test[k,:,2]') for k=1:prod(ntest)])
     
+    @info "training"
+    model = ELM(gpu(data_train[:,:,1]),gpu(data_train[:,:,2]),num_hidden=num_hidden)
+    BSON.@save "exp-elm-$num_hidden.bson" model data_train data_test
+
+    avg_train_acc = mean(accuracy(model(gpu(data_train[:,:,1]')) .> .5, gpu(data_train[:,:,2]')))
+    avg_test_acc  = mean(accuracy((cpu(model(gpu(data_test[k,:,1]'))) .> 0.5) .== cpu(data_test[k,:,2])') for k=1:prod(ntest))
     
     return avg_train, avg_test
 end
+
+avg_train, avg_test = experiment_elm()

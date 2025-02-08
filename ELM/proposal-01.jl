@@ -1,17 +1,23 @@
 using Flux , LinearAlgebra, StatsBase, Random, CUDA, Logging, Dates
 include("tools.jl")
+using StatisticalMeasures
 
 loss(m,x,y) = mean( abs2.( m(x) .- y ))
-
-
-
+acc(m,x,y) = accuracy(y, m(x))
+f1(m,x,y) = f1score(cpu(y), cpu(m(x)))
+prec(m,x,y) = StatisticalMeasures.precision(cpu(y), cpu(m(x)))
+rec(m,x,y) = recall(cpu(y), cpu(m(x)))
 
 function gen_inter_elm(X,Y;num_hidden = 1048,λ = 1e-3,activation=tanh)
     num_metrics = size(X,3)
     models = [ELM(X[:,:,k],Y,num_hidden=num_hidden,λ = λ, activation=activation) |> gpu for k=1:num_metrics]
-    return [models[k](X[:,:,k]) |> gpu for k=1:num_metrics]
+    return models
 end
 
+function eval_inter_elm(models,X)
+    num_metrics = size(X,3)
+    return [models[k](X[:,:,k]) for k=1:num_metrics]
+end
 
 function combine(a,b)
     out = CUDA.zeros(Float32,size(a[1]))
@@ -21,13 +27,14 @@ function combine(a,b)
     return out
 end
 
-function experiment_combine_cor_mif_uniform(; N = 20 , ntrain = 100, ntest = 20,epochs = 100, λ=1e-3,activation = tanh)
-    num_hidden  = 3*N*N+1
+function experiment_combine_cor_mif_uniform(; N = 50, ntrain = 40, ntest = 5,epochs = 100, λ=1e-3,activation = tanh)
+    num_hidden  = 2*N*N+1
     data1,data2 = gen_data(N = N,ntrain=ntrain)
     data3,data4 = gen_data(N = N,ntrain=ntest)
-    num_metrics = size(data2,3)    
-    out_train = gen_inter_elm(data2,data1,num_hidden = num_hidden, activation = activation, λ = λ)
-    out_valid = gen_inter_elm(data4,data3,num_hidden = num_hidden, activation = activation, λ = λ)
+    num_metrics = size(data2,3) 
+    inter_elms = gen_inter_elm(data2,data1,num_hidden = num_hidden, activation = activation, λ = λ) 
+    out_train = eval_inter_elm(inter_elms,data2)
+    out_valid = eval_inter_elm(inter_elms,data4)
    
     w = ones(num_metrics)
 
@@ -37,23 +44,37 @@ function experiment_combine_cor_mif_uniform(; N = 20 , ntrain = 100, ntest = 20,
     acc(m,x,y) = mean( m(x) .== y)
     
     training_acc,validation_acc = acc(model,out_train,data1),acc(model,out_valid,data3)
+    training_f1, validation_f1 = f1(model,out_train,data1),f1(model,out_valid,data3)
+    recall_train, recall_valid = rec(model,out_train,data1),rec(model,out_valid,data3)
+    precision_train, precision_valid = prec(model,out_train,data1),prec(model,out_valid,data3)
     println("=========== REPORT FOR COMBINING corr and mutual =============")
     println("date : ",Dates.format(now(),"YYYY-mm-dd-HHhMM"))
     println("results for N =$N, num_hidden = $num_hidden")
     println("Training   acc = $training_acc")
     println("Validation acc = $validation_acc")
+    println("Training   f1  = $training_f1")
+    println("Validation f1  = $validation_f1")
+    println("Training   recall = $recall_train")
+    println("Validation recall = $recall_valid")
+    println("Training   precision = $precision_train")
+    println("Validation precision = $precision_valid")
 end
+
+experiment_combine_cor_mif_uniform()
 
 function experiment_combine_cor_mif_ensemble(; N = 20 , ntrain = 100, ntest = 20, λ=1e-3,activation = tanh,
                                              num_ensemble = 100)
-    num_hidden  = 3*N*N+1
+    num_hidden  = 2*N*N+1
     data1,data2 = gen_data(N = N,ntrain=ntrain)
     data3,data4 = gen_data(N = N,ntrain=ntest)
-    num_metrics = size(data2,3)    
-    out_train = gen_inter_elm(data2,data1,num_hidden = num_hidden, activation = activation, λ = λ)
-    out_valid = gen_inter_elm(data4,data3,num_hidden = num_hidden, activation = activation, λ = λ)
+    num_metrics = size(data2,3)
+    inter_elms = gen_inter_elm(data2,data1,num_hidden = num_hidden, activation = activation, λ = λ)
+    out_train = eval_inter_elm(inter_elms,data2)
+    out_valid = eval_inter_elm(inter_elms,data4)
 
-    #loss(m,x,y) = mean( m(x) .== y ) 
+    #loss(m,x,y) = mean( m(x) .== y )
+    train_f1s = []
+    valid_f1s = [] 
     losses = []
     coeffs = []
     w = ones(num_metrics)
@@ -67,6 +88,8 @@ function experiment_combine_cor_mif_ensemble(; N = 20 , ntrain = 100, ntest = 20
         CUDA.synchronize()
         push!(losses,validation_loss+training_loss)
         push!(coeffs,copy(w))
+        push!(train_f1s,f1(model,out_train,data1))
+        push!(valid_f1s,f1(model,out_valid,data3))
         w = randn(num_metrics)
     end
 
@@ -74,10 +97,11 @@ function experiment_combine_cor_mif_ensemble(; N = 20 , ntrain = 100, ntest = 20
     println("date : ",Dates.format(now(),"YYYY-mm-dd-HHhMM"))
     println("results for N =$N, num_hidden = $num_hidden")
     println("minimal loss : ",minimum(losses))
-    return losses,coeffs
+    return losses,coeffs, train_f1s, valid_f1s
     # plot(sort(losses))
 end
 
+losses, coeffs, train_f1s, valid_f1s = experiment_combine_cor_mif_ensemble()
 
     
     # for epoch = 1:epochs
