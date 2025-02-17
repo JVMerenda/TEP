@@ -131,7 +131,7 @@ function main(
                 if tep_dt < 0.
                     npzwrite(tepnames[1], Dynamic.to_tep(sol))
                 else
-                    npzwrite("tep-$(g_name)-$(tep_pad(j))-$(tep_dt).npz", Dynamic.to_tep(sol, dt))
+                    npzwrite("tep-$(g_name)-$(tep_pad(j))-$(tep_dt).npz", Dynamic.to_tep(sol, tep_dt))
                 end
             end
             if(create_plot)
