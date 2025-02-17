@@ -21,12 +21,12 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 - `--lambda` Infection rate (default 0.03)
 - `--mu` Healing rate (default 0.09)
 - `--T` Time period (default 100.0)
-- `--use-msis` Use the Metapopulation model with mobility MSIS (default false)
+- `--dyn` Type of dynamic to use (SIS, MSIS or MMCA) (default SIS)
 - `--delta` Mobility rate in MSIS (default 0.1)
 - `--ppn` Initial number of people per vertex in MSIS (default 30)
 - `--input` Input file or directory with adjacency matrices
 - `--output` Output directory (default ".")
-- `--dt` Sampling steps as an array (e.g. [.1,1.,10.]; if nothing is given, the exact tep is returned
+- `--dt` Sampling step; if nothing is given, the exact tep is returned (only possible for SIS)
 - `--plot` Flag to plot the evolution of infectious density (recommend to use with only one thread)
 - `--allow-dieout` Flag to also store the result if the infection has died out by time `T`
 - `--store-tep` Flag to store the TEP
@@ -48,20 +48,25 @@ julia --project generate_tep.jl --N_graphs 4 --N_vertices 0 --N_teps 0 --output 
 ```
 Evaluate a single network
 ```bash
-julia --project generate_tep.jl --input graphs/graph-1.npz --N_teps 10 --output graphs/ --dt [1.,]
+julia --project generate_tep.jl --input graphs/graph-1.npz --N_teps 10 --output graphs/ --dt 1.
 ```
 Evaluate all networks
 ```bash
-julia --project -t 4 generate_tep.jl --input graphs/ --N_teps 10 --output graphs/ --dt [.1,.5]
+julia --project -t 4 generate_tep.jl --input graphs/ --N_teps 10 --output graphs/ --dt .5
 ```
 """
 function main(
-        N_teps::Int64, λ::Float64, μ::Float64, T::Float64,dts::Vector{Float64},
-        input::AbstractString, output_dir::AbstractString, use_msis::Bool, δ::Float64,
+        N_teps::Int64, λ::Float64, μ::Float64, T::Float64, tep_dt::Float64,
+        input::AbstractString, output_dir::AbstractString, dynamic::AbstractString, δ::Float64,
         ppn::Int64, allow_dieout::Bool, store_tep::Bool, store_mutual_info::Bool,
         create_plot::Bool, mutual_info_word_length::Int64, mutual_info_dt::Float64,
     )
-    Dynamic = use_msis ? MSIS : SIS
+    dynamic_map = Dict(
+        "SIS" => SIS,
+        "MSIS" => MSIS,
+        "MMCA" => MMCA
+    )
+    Dynamic = dynamic_map[uppercase(dynamic)]
 
     tep_pad = i -> lpad(i, length(string(N_teps)), '0')
     graphs = read_graph(input)
@@ -98,11 +103,9 @@ function main(
         # And simulate N_teps times
         inner_pb = Progress(N_teps; dt=1, desc="TEPs for graph $(g_name)")
         Threads.@threads for j in start_point:N_teps
-            tepnames = isempty(dts) ? 
-                ["tep-$g_name-$(tep_pad(j)).npz", ] :
-                ["tep-$g_name-$(tep_pad(j))-$dt.npz" for dt in dts]
+            tepname = tep_dt < 0. ? "tep-$g_name-$(tep_pad(j)).npz" : "tep-$g_name-$(tep_pad(j))-$(tep_dt).npz"
 
-            if (!new_graph || store_mutual_info) && all(tepname -> isfile(tepname), tepnames)
+            if (!new_graph || store_mutual_info) && isfile(tepname)
                 if store_mutual_info
                     tep_mutual_info =  mutual_info_from_tep(tepnames[1], mutual_info_word_length, mutual_info_dt)
                     mutual_info[j,:] .= vectorize_upper_triangular(tep_mutual_info; include_diagonal=true)
@@ -113,9 +116,9 @@ function main(
                 continue
             end
 
-            sol = Dynamic.solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv; δ, ppn)
+            sol = Dynamic.solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv; δ, ppn, dt=tep_dt)
             while !Dynamic.is_success(sol, allow_dieout)
-                sol = Dynamic.solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv; δ, ppn)
+                sol = Dynamic.solve_problem(λ, μ, nv(graph), T, jset, vtj, jtv; δ, ppn, dt=tep_dt)
             end
 
             if store_mutual_info
@@ -125,10 +128,10 @@ function main(
 
             # Result storage
             if store_tep
-                if isempty(dts)
+                if tep_dt < 0.
                     npzwrite(tepnames[1], Dynamic.to_tep(sol))
                 else
-                    map(dt -> npzwrite("tep-$(g_name)-$(tep_pad(j))-$dt.npz", Dynamic.to_tep(sol, dt)), dts)
+                    npzwrite("tep-$(g_name)-$(tep_pad(j))-$(tep_dt).npz", Dynamic.to_tep(sol, dt))
                 end
             end
             if(create_plot)
@@ -152,7 +155,7 @@ args = parse_command_line_args()
 args["plot"] && using Plots
 main(
     args["N_teps"], args["lambda"], args["mu"], args["T"],
-    args["dt"], args["input"], args["output"], args["use-msis"],
+    args["dt"], args["input"], args["output"], args["dyn"],
     args["delta"], args["ppn"], args["allow-dieout"], args["store-tep"],
     args["store-mutual-info"], args["plot"], args["mutual-info-word-length"],
     args["mutual-info-dt"]

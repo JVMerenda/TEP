@@ -22,7 +22,7 @@ function generate_jump_sets(graph)
 
     # Infection event (jump over an edge)
     e_SI = ConstantJumpEdge(
-        (vs, vd, p, t) -> vs[1]*(1. - vd[1])*p[1], # rate
+        (vs, vd, p, t) -> vs[1]*(1 - vd[1])*p[1], # rate
         (vs, vd, p, t) -> vd[1] = infectious  # affect!
     )
 
@@ -36,7 +36,7 @@ end
 """
     Construct the jump problem with a single random  infectious node and calculate a solution.
 """
-function solve_problem(λ, μ, n, T, jset, vtj, jtv; δ=nothing, ppn=nothing)
+function solve_problem(λ, μ, n, T, jset, vtj, jtv; δ=nothing, ppn=nothing, dt=nothing)
     p = (λ, μ)
     u₀ = zeros(StateType, n)
     u₀[rand(eachindex(u₀))] = infectious

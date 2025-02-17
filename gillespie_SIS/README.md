@@ -37,12 +37,12 @@ If not given, the exact tep is stored as a list of time points and the vertex in
 - `--lambda` Infection rate (default 0.03)
 - `--mu` Healing rate (default 0.09)
 - `--T` Time period (default 100.0)
-- `--use-msis` Use the Metapopulation model with mobility MSIS (default false)
+- `--syn` used dynamic: SIS MSIS or MMCA (default SIS)
 - `--delta` Mobility rate in MSIS (default 0.1)
 - `--ppn` Initial number of people per vertex in MSIS (default 30)
 - `--input` Input file or directory with adjacency matrices
 - `--output` Output directory (default ".")
-- `--dt` Sampling steps as an array (e.g. [.1,1.,10.]; if nothing is given, the exact tep is returned
+- `--dt` Sampling step; if nothing is given, the exact tep is returned
 - `--plot` Flag to plot the evolution of infectious density (recommend to use with only one thread)
 - `--allow-dieout` Flag to also store the result if the infection has died out by time `T`
 - `--store-tep` Flag to store the TEP

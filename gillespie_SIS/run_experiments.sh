@@ -1,16 +1,23 @@
 #!/bin/bash
 
+#  For sis
+DYN_DIR="sis"
+LAMBDA=0.03
+DYN_FLAG="--dyn SIS"
+MI_WORD_FLAG=""
+
 # For msis
 DYN_DIR="msis"
 LAMBDA=0.3
-MSIS_FLAG="--use-msis"
+DYN_FLAG="--dyn MSIS"
 MI_WORD_FLAG="--mutual-info-word-length 1"
 
-# For sis
-# DYN_DIR="sis"
-# LAMBDA=0.03
-# MSIS_FLAG=""
-#MI_WORD_FLAG=""
+# For MMCA
+DYN_DIR="mmca"
+LAMBDA=0.03
+DYN_FLAG="--dyn MMCA"
+MI_WORD_FLAG=""
+
 
 N_THREADS=4
 N_GRAPHS=50

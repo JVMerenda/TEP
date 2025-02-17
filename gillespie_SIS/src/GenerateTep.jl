@@ -14,6 +14,8 @@ __precompile__()
 
 export SIS
 export MSIS
+export MMCA
+
 export parse_command_line_args
 export read_graph
 export discretize_distribution
