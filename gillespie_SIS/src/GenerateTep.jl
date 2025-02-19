@@ -1,8 +1,8 @@
 module GenerateTep
 
 using ArgParse
-using Associations
 using ComplexityMeasures
+using Associations
 using Distributions
 using Graphs
 using Printf
@@ -14,6 +14,8 @@ __precompile__()
 
 export SIS
 export MSIS
+export MMCA
+
 export parse_command_line_args
 export read_graph
 export discretize_distribution
@@ -41,6 +43,7 @@ export store_sample_p
 include(joinpath(@__DIR__, "read_tep.jl"))
 include(joinpath(@__DIR__, "gillespie_sis.jl"))
 include(joinpath(@__DIR__, "gillespie_msis.jl"))
+include(joinpath(@__DIR__, "mmca_sis.jl"))
 include(joinpath(@__DIR__, "preparation.jl"))
 include(joinpath(@__DIR__, "mutual_info.jl"))
 

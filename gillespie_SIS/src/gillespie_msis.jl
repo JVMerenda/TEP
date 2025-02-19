@@ -52,7 +52,7 @@ end
 """
     Construct the jump problem with a single random  infectious node and calculate a solution.
 """
-function solve_problem(λ, μ, n, T, jset, vtj, jtv; δ=λ, ppn=30)
+function solve_problem(λ, μ, n, T, jset, vtj, jtv; δ=λ, ppn=30, dt=nothing)
     p = (λ, μ, δ)
     u₀ = vcat(fill([ppn, 0], n)...)
     inf_v = rand(1:n)

@@ -36,16 +36,17 @@ function parse_command_line_args()
 
         "--dt"
         help = "Sampling step; if nothing is given, the exact tep is returned"
-        arg_type = Vector{Float64}
-        default = Vector{Float64}()
+        arg_type = Float64
+        default = -1.
 
         "--allow-dieout"
         help = "Also store the result if the infection has died out by time `T`"
         action = :store_true
 
-        "--use-msis"
-        help = "Use the Metapopulation model with mobility MSIS"
-        action = :store_true
+        "--dyn"
+        help = "Select the dynamic which to use (SIS, MSIS or MMCA)"
+        arg_type = String
+        default = "SIS"
 
         "--delta"
         help = "Mobility rate in MSIS"
